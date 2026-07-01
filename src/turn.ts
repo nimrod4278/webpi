@@ -9,6 +9,11 @@
 import { AsyncQueue } from "./async-queue.js";
 import type { AgentEvent, AgentMessage } from "@earendil-works/pi-agent-core";
 
+/** Tool activity surfaced alongside the text stream, so a UI can show it. */
+export type ToolEvent =
+  | { type: "start"; toolCallId: string; toolName: string; args: unknown }
+  | { type: "end"; toolCallId: string; toolName: string; result: unknown; isError: boolean };
+
 export class Turn implements AsyncIterable<string>, PromiseLike<string> {
   private readonly deltas = new AsyncQueue<string>();
   private chunks: string[] = [];
@@ -18,7 +23,10 @@ export class Turn implements AsyncIterable<string>, PromiseLike<string> {
   private resolveDone!: (text: string) => void;
   private rejectDone!: (err: unknown) => void;
 
-  constructor(private readonly onAbort: () => void) {
+  constructor(
+    private readonly onAbort: () => void,
+    private readonly onTool?: (event: ToolEvent) => void,
+  ) {
     this.done = new Promise<string>((resolve, reject) => {
       this.resolveDone = resolve;
       this.rejectDone = reject;
@@ -61,6 +69,32 @@ export class Turn implements AsyncIterable<string>, PromiseLike<string> {
         } else if (sub?.type === "error") {
           this.fail(new Error("pi reported a streaming error"));
         }
+        break;
+      }
+      case "tool_execution_start": {
+        const e = event as { toolCallId: string; toolName: string; args: unknown };
+        this.onTool?.({
+          type: "start",
+          toolCallId: e.toolCallId,
+          toolName: e.toolName,
+          args: e.args,
+        });
+        break;
+      }
+      case "tool_execution_end": {
+        const e = event as {
+          toolCallId: string;
+          toolName: string;
+          result: unknown;
+          isError: boolean;
+        };
+        this.onTool?.({
+          type: "end",
+          toolCallId: e.toolCallId,
+          toolName: e.toolName,
+          result: e.result,
+          isError: e.isError,
+        });
         break;
       }
       case "agent_end": {

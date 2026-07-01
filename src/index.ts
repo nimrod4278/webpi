@@ -9,8 +9,9 @@
  */
 
 export { createChat, Chat } from "./chat.js";
-export type { ChatOptions } from "./chat.js";
+export type { ChatOptions, SendOptions } from "./chat.js";
 export { Turn } from "./turn.js";
+export type { ToolEvent } from "./turn.js";
 export { VirtualFS, createFileTools } from "./tools/fs.js";
 export { createBashTool } from "./tools/bash.js";
 export { NullSandbox } from "./sandbox.js";

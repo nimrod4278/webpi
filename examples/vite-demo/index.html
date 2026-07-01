@@ -12,17 +12,22 @@
       .meta { color: #888; font-size: 12px; }
       .files { font-family: ui-monospace, monospace; font-size: 12px; color: #555; }
     </style>
+    <!-- Globals for the bash sandbox: xterm-pty (openpty/TtyServer/Termios) + runcontainerjs -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@4.17.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-pty@0.9.4/index.js"></script>
+    <script src="/dist/runcontainer.js"></script>
   </head>
   <body>
     <h1>wepi</h1>
-    <p class="meta">The pi coding agent, running natively in your browser. Files live in a sandboxed virtual workspace.</p>
+    <p class="meta">The pi coding agent, native in your browser. Files in a sandboxed virtual workspace; <code>bash</code> runs in a container2wasm Alpine sandbox.</p>
     <p><input id="key" type="password" placeholder="Anthropic API key (sk-ant-…)" size="48" /></p>
     <p>
-      <input id="msg" placeholder="Ask pi to create or edit a file…" disabled />
+      <input id="msg" placeholder="Ask pi to create a file, or run a shell command…" disabled />
       <button id="send" disabled>Send</button>
     </p>
     <div id="log"></div>
     <p class="meta">Workspace: <span id="files" class="files">(empty)</span></p>
+    <p class="meta" id="sandbox-status">sandbox: not started</p>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

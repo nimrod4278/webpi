@@ -10,7 +10,7 @@ import { buildModel } from "./model.js";
 import { VirtualFS, createFileTools } from "./tools/fs.js";
 import { createBashTool } from "./tools/bash.js";
 import { NullSandbox, type Sandbox } from "./sandbox.js";
-import { Turn } from "./turn.js";
+import { Turn, type ToolEvent } from "./turn.js";
 
 const DEFAULT_SYSTEM_PROMPT =
   "You are pi, a coding assistant running entirely in the user's browser. " +
@@ -33,6 +33,11 @@ export interface ChatOptions {
   sandbox?: Sandbox;
   /** Extra agent tools to expose. */
   tools?: AgentTool[];
+}
+
+export interface SendOptions {
+  /** Observe tool calls (e.g. `bash`) as they start and finish, for UI display. */
+  onTool?: (event: ToolEvent) => void;
 }
 
 /** Create a chat. Async to keep room for sandbox warm-up later. */
@@ -73,8 +78,8 @@ export class Chat {
   }
 
   /** Send a message; returns a Turn you can stream (`for await`) or await. */
-  send(message: string): Turn {
-    const turn = new Turn(() => this.agent.abort());
+  send(message: string, opts: SendOptions = {}): Turn {
+    const turn = new Turn(() => this.agent.abort(), opts.onTool);
     this.current = turn;
     const unsub = this.agent.subscribe((event) => turn.handleEvent(event));
     this.agent
