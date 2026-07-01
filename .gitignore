@@ -1,5 +1,5 @@
 node_modules/
 dist/
 *.wasm
-examples/*/public/pi.wasm
+apps/*/public/pi.wasm
 .DS_Store

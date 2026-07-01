@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 // The agent runs native, but the bash sandbox (container2wasm + xterm-pty
 // TtyServer) uses SharedArrayBuffer, which needs cross-origin isolation.
@@ -9,6 +10,7 @@ const coiHeaders = {
 };
 
 export default defineConfig({
+  plugins: [react()],
   server: { headers: coiHeaders },
   preview: { headers: coiHeaders },
   define: {

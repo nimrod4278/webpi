@@ -7,11 +7,14 @@
  * interactive /bin/sh over a RAW-mode PTY and capture output up to a unique
  * sentinel (classic pexpect pattern), so no terminal UI is needed.
  *
- * Globals (loaded via <script> in index.html): RunContainer, openpty, TtyServer,
- * Termios, and the termios flag constants from xterm-pty.
+ * Globals (loaded via <script> in the host app's index.html): RunContainer,
+ * openpty, TtyServer, Termios, and the termios flag constants from xterm-pty.
+ * The SDK ships this class, but the ~34MB wasm/image assets and the xterm-pty +
+ * runcontainerjs <script> globals remain the host app's responsibility — see the
+ * `wepi/c2w` and cross-origin-isolation notes in the README.
  */
 
-import type { Sandbox, ExecResult } from "wepi";
+import type { Sandbox, ExecResult } from "../sandbox.js";
 
 // xterm-pty + runcontainerjs put these on the global scope.
 const g = window as unknown as Record<string, any>;

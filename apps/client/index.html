@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wepi — pi agent in the browser</title>
+    <!-- Globals for the bash sandbox: xterm-pty (openpty/TtyServer/Termios) + runcontainerjs.
+         These, the wasm/image assets in /public, and the COI headers (vite.config.ts) are the
+         host app's responsibility — the `wepi` SDK ships the code that drives them. -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@4.17.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-pty@0.9.4/index.js"></script>
+    <script src="/dist/runcontainer.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

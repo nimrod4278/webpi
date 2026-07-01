@@ -1,0 +1,115 @@
+/* Optional default styling for <PiChat>. Import once: `import "wepi/react/PiChat.css"`.
+   All classes are namespaced `wepi-` and tokenized via CSS variables you can override. */
+.wepi-chat {
+  --wepi-fg: #1a1a1a;
+  --wepi-muted: #888;
+  --wepi-panel: #f5f5f5;
+  --wepi-border: #e2e2e2;
+  --wepi-accent: #4f46e5;
+  --wepi-error: #c0392b;
+  font: 14px/1.5 system-ui, sans-serif;
+  color: var(--wepi-fg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wepi-transcript {
+  background: var(--wepi-panel);
+  border: 1px solid var(--wepi-border);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 12rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.wepi-empty {
+  color: var(--wepi-muted);
+  margin: 0;
+}
+
+.wepi-msg {
+  margin-bottom: 1rem;
+}
+.wepi-msg:last-child {
+  margin-bottom: 0;
+}
+
+.wepi-role {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wepi-muted);
+  margin-bottom: 0.15rem;
+}
+.wepi-msg-user .wepi-role {
+  color: var(--wepi-accent);
+}
+
+.wepi-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.wepi-cursor {
+  animation: wepi-blink 1s steps(1) infinite;
+  color: var(--wepi-muted);
+}
+@keyframes wepi-blink {
+  50% { opacity: 0; }
+}
+
+.wepi-tools {
+  border-left: 2px solid var(--wepi-border);
+  padding-left: 0.6rem;
+  margin: 0.25rem 0 0.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #555;
+}
+.wepi-tool {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.wepi-tool-name {
+  color: var(--wepi-accent);
+  font-weight: 600;
+}
+.wepi-tool-end {
+  color: var(--wepi-muted);
+}
+.wepi-tool-error {
+  color: var(--wepi-error);
+}
+
+.wepi-composer {
+  display: flex;
+  gap: 0.5rem;
+}
+.wepi-input {
+  flex: 1;
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid var(--wepi-border);
+  border-radius: 6px;
+}
+.wepi-btn {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--wepi-accent);
+  color: #fff;
+  cursor: pointer;
+}
+.wepi-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wepi-status {
+  font-size: 12px;
+  color: var(--wepi-muted);
+  margin: 0;
+}

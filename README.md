@@ -7,10 +7,27 @@ image (minimal Node + pi) in a Web Worker and drives it over pi's RPC protocol.
 > Status: **proof of concept**. The SDK core is implemented and unit-tested; the
 > `pi.wasm` image is built separately (see [Building the image](#building-the-image)).
 
+## Monorepo layout
+
+This is a pnpm monorepo with two packages:
+
+```
+packages/sdk    → the `wepi` SDK: headless core + React components (`wepi/react`) + c2w sandbox (`wepi/c2w`)
+apps/client     → a React + Vite app; the canonical example of consuming the SDK
+```
+
+```bash
+pnpm install
+pnpm -r build          # build every package
+pnpm -r typecheck
+pnpm --filter wepi test
+pnpm --filter wepi-client dev   # run the example app
+```
+
 ## Install
 
 ```bash
-pnpm add wepi
+pnpm add wepi          # + react, react-dom if you use wepi/react
 ```
 
 ## Use — the entire API
@@ -39,6 +56,44 @@ chat.dispose();           // tear down the worker
 
 One-shot helper: `await ask("Summarize a.ts", { apiKey })`.
 
+## Use — React (`wepi/react`)
+
+A drop-in component. It boots the c2w bash sandbox for you (see below), so pi can
+run shell commands out of the box:
+
+```tsx
+import { PiChat } from "wepi/react";
+import "wepi/react/PiChat.css";            // optional default styling
+
+<PiChat apiKey={key} files={{ "README.md": "# my project\n" }} />
+```
+
+Or compose your own UI with the hooks — same agent, your markup:
+
+```tsx
+import { usePiChat, useC2wSandbox } from "wepi/react";
+
+const c2w = useC2wSandbox();               // boots + warms the bash sandbox
+const pi = usePiChat({ apiKey, sandbox: c2w.sandbox });
+// pi.transcript, pi.send(text), pi.busy, pi.abort(), pi.files()
+```
+
+`react` / `react-dom` are peer dependencies. The bash sandbox needs a
+cross-origin-isolated page plus a few app-supplied assets — see below.
+
+## The c2w bash sandbox (`wepi/c2w`)
+
+`PiChat`/`useC2wSandbox` use `C2wSandbox`, a container2wasm Alpine VM that backs
+pi's `bash` tool. The SDK ships the code; the **host app** supplies the runtime
+pieces (they're deployment/CORS concerns, not shippable in an npm package):
+
+- the xterm-pty + `runcontainer.js` global `<script>`s in `index.html`,
+- the wasm/image assets in `public/` (`out.wasm.gzip`, `imagemounter.wasm.gzip`,
+  the `alpine/` OCI image, `worker.js`, `dist/`),
+- the cross-origin-isolation headers (see below).
+
+`apps/client` wires all of this up — copy it as a starting point.
+
 ## How it works
 
 ```
@@ -64,7 +119,7 @@ Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
-The Vite demo (`examples/vite-demo`) sets these for you.
+The example app (`apps/client`) sets these for you.
 
 ## Building the image
 
@@ -82,11 +137,13 @@ or publish it and update `DEFAULT_IMAGE_URL` in `src/image.ts`.
 ## Run the demo
 
 ```bash
-pnpm build
-./build/build.sh                      # produce dist/pi.wasm
-cp dist/pi.wasm examples/vite-demo/public/pi.wasm
-pnpm --filter wepi-vite-demo dev
+pnpm install
+pnpm --filter wepi build              # build the SDK (so wepi/react resolves)
+pnpm --filter wepi-client dev         # http://localhost:5173
 ```
+
+The bash sandbox assets ship in `apps/client/public`; rebuild them from a fresh
+image with `apps/client/scripts/build-image.mjs` if needed.
 
 ## Networking & keys
 
@@ -107,8 +164,8 @@ is needed to snapshot mid-run while the runtime worker is blocked on stdin).
 
 ```bash
 pnpm install
-pnpm typecheck
-pnpm test        # pure core: framing, RPC correlation, Turn stream/await
+pnpm -r typecheck
+pnpm --filter wepi test   # pure core: framing, RPC correlation, Turn stream/await
 ```
 
 ## License
