@@ -20,6 +20,8 @@ export { NullSandbox } from "./sandbox.js";
 export type { Sandbox, ExecResult } from "./sandbox.js";
 export { buildModel } from "./model.js";
 export type { ModelConfig, BuiltModel } from "./model.js";
+// Re-exported for consumers injecting a custom/local provider (e.g. wepi/webllm).
+export type { Api, Model, Provider } from "@earendil-works/pi-ai";
 export { WepiError } from "./errors.js";
 export type { WepiErrorCode } from "./errors.js";
 export type { ChatStore, ChatSnapshot } from "./store.js";

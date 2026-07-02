@@ -6,15 +6,20 @@
 
 import { useState, type KeyboardEvent } from "react";
 import { usePiChat, useC2wSandbox } from "wepi/react";
+import type { ModelChoice } from "./App";
 
-export function CustomChat({ apiKey }: { apiKey: string }) {
+export function CustomChat({ choice }: { choice: ModelChoice }) {
   // 1. Boot the container2wasm bash sandbox (status drives the line at the bottom).
   const c2w = useC2wSandbox();
 
-  // 2. Create the agent, wired to that sandbox. Hold the key back until the
-  //    sandbox instance exists so bash is available from the first turn.
+  // 2. Create the agent, wired to that sandbox and the chosen model (cloud or
+  //    local). Hold creation back until the sandbox exists so bash is available
+  //    from the first turn — gate on the credential/provider the choice carries.
+  const gated = c2w.sandbox
+    ? { provider: choice.provider, model: choice.model, apiKey: choice.apiKey }
+    : { apiKey: "" };
   const pi = usePiChat({
-    apiKey: c2w.sandbox ? apiKey : "",
+    ...gated,
     sandbox: c2w.sandbox,
     files: { "notes.txt": "hello from the hooks demo\n" },
   });

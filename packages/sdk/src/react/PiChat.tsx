@@ -24,10 +24,10 @@ export interface PiChatProps {
   baseUrl?: string;
   /** Seed the virtual workspace, keyed by relative path. */
   files?: Record<string, string>;
-  /** Model id (default: a current Claude). */
-  model?: string;
-  /** pi-ai provider id (default: "anthropic"). */
-  provider?: string;
+  /** Model id (default: a sensible per-provider choice), or a full pi-ai `Model` object. */
+  model?: import("../chat.js").ChatOptions["model"];
+  /** Cloud provider id (default: "anthropic"), or a pi-ai `Provider` object (incl. local `wepi/webllm`). */
+  provider?: import("../chat.js").ChatOptions["provider"];
   /** Override the system prompt. */
   systemPrompt?: string;
   /** Persist + resume the conversation (IndexedDB id, or { id, store }). */
