@@ -61,6 +61,59 @@ chat.dispose();           // abort + flush a final snapshot
 
 One-shot helper: `await ask("Summarize a.ts", { apiKey })`.
 
+### Models — any provider, cloud or local
+
+wepi is model-agnostic. Pick a cloud provider by string id, or inject a pi-ai
+`Provider` object for anything else — including a **local model running in the
+browser over WebGPU** (no API key, no provider calls).
+
+```ts
+// Cloud, by string id — anthropic (default), openai, google, mistral, groq, xai, deepseek, openrouter:
+await createChat({ provider: "openai", model: "gpt-5.1",          apiKey });
+await createChat({ provider: "google", model: "gemini-2.5-pro",    apiKey });
+
+// Any other pi-ai provider — inject the Provider object (keeps the default bundle lean):
+import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
+await createChat({ provider: deepseekProvider(), model: "deepseek-v4-pro", apiKey });
+
+// Local, in-browser via wllama (llama.cpp/WASM + WebGPU) — keyless, ANY GGUF on HF:
+import { createWllamaProvider } from "wepi/wllama";
+import wasmUrl from "@wllama/wllama/esm/wasm/wllama.wasm?url"; // vite
+const { provider, modelId } = await createWllamaProvider({
+  repo: "Qwen/Qwen3-1.7B-GGUF", quant: "Q4_K_M",   // day-one GGUF, no precompilation
+  wasmUrl,
+  onProgress: ({ loaded, total }) => console.log(loaded / total),
+});
+await createChat({ provider, model: modelId });
+
+// Local, in-browser via WebLLM + WebGPU — keyless (MLC precompiled models only):
+import { createWebLLMProvider } from "wepi/webllm";
+const { provider, modelId } = await createWebLLMProvider({
+  model: "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC",   // pick a function-calling model
+  onProgress: (p) => console.log(p.text),          // weight download / compile progress
+});
+await createChat({ provider, model: modelId });
+
+// Local, native runtime (Ollama / llama.cpp server / LM Studio) — zero extra code,
+// it's just an OpenAI-compatible endpoint:
+await createChat({ provider: "openai", model: "qwen3:8b", baseUrl: "http://localhost:11434/v1" });
+```
+
+**Which local engine?** `wepi/wllama` runs **any GGUF on Hugging Face with zero
+conversion** (llama.cpp gets new architectures first, so the latest open-source
+models work day-one) and is WebGPU-accelerated since wllama v3.1. `wepi/webllm`
+only runs MLC-precompiled models — a mature engine, but the newest releases lag.
+Both are **optional** peer dependencies (`@wllama/wllama`, `@mlc-ai/web-llm`),
+loaded only by their respective modules, and both accept a pre-created `engine`
+if you'd rather own the load (recommended with bundlers).
+
+Because the pi agent drives its tools through function calls, choose a model with
+real function-calling support (wllama: e.g. Qwen3 or Llama-3.x-Instruct GGUFs;
+WebLLM: a Hermes-2-Pro or Llama-3.1-8B FC build); instruct-only models will chat
+but won't reliably call tools. wllama notes: single files are capped at 2 GB
+(use split GGUF above that), serve with COOP/COEP headers to unlock
+multi-threading, and avoid IQ-quants on WASM.
+
 Errors are typed: turns reject with `WepiError` whose `code` is `"auth"`,
 `"rate_limit"`, `"provider"`, `"busy"`, … so apps can branch. A second `send()`
 while a turn is in flight throws (`code: "busy"`); an aborted turn *resolves*
