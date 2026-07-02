@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>wepi — sandbox smoke test</title>
+    <!-- Same sandbox globals as index.html; no API key needed: boots the c2w
+         VM directly and runs a fixed command list. Open /sandbox-test.html in
+         dev to eyeball the image after rebuilding public/alpine. -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@4.17.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-pty@0.9.4/index.js"></script>
+    <script src="/dist/runcontainer.js"></script>
+  </head>
+  <body>
+    <h1>sandbox smoke test</h1>
+    <pre id="log" style="font: 12px/1.4 monospace; white-space: pre-wrap"></pre>
+    <script type="module" src="/src/sandbox-test.ts"></script>
+  </body>
+</html>

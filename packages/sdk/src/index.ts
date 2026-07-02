@@ -9,14 +9,21 @@
  */
 
 export { createChat, Chat } from "./chat.js";
-export type { ChatOptions, SendOptions } from "./chat.js";
+export type { ChatOptions, SendOptions, ChatMetrics } from "./chat.js";
 export { Turn } from "./turn.js";
 export type { ToolEvent } from "./turn.js";
 export { VirtualFS, createFileTools } from "./tools/fs.js";
+export type { FSChange } from "./tools/fs.js";
 export { createBashTool } from "./tools/bash.js";
+export type { BashToolOptions } from "./tools/bash.js";
 export { NullSandbox } from "./sandbox.js";
 export type { Sandbox, ExecResult } from "./sandbox.js";
 export { buildModel } from "./model.js";
+export type { ModelConfig, BuiltModel } from "./model.js";
+export { WepiError } from "./errors.js";
+export type { WepiErrorCode } from "./errors.js";
+export type { ChatStore, ChatSnapshot } from "./store.js";
+export { IndexedDBStore } from "./store/indexeddb.js";
 
 import { createChat, type ChatOptions } from "./chat.js";
 

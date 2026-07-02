@@ -4,9 +4,14 @@
  *   - a `Promise<string>` resolving to the full assistant reply on `agent_end`
  *
  * It consumes pi-agent-core's `AgentEvent`s for the duration of one prompt.
+ *
+ * Settlement: an aborted turn RESOLVES with the partial text (check
+ * `turn.aborted`) — stopping is not an error. A provider failure REJECTS with
+ * a `WepiError` whose `code` distinguishes auth / rate-limit / other.
  */
 
 import { AsyncQueue } from "./async-queue.js";
+import { WepiError, classifyProviderError } from "./errors.js";
 import type { AgentEvent, AgentMessage } from "@earendil-works/pi-agent-core";
 
 /** Tool activity surfaced alongside the text stream, so a UI can show it. */
@@ -18,7 +23,8 @@ export class Turn implements AsyncIterable<string>, PromiseLike<string> {
   private readonly deltas = new AsyncQueue<string>();
   private chunks: string[] = [];
   private messages: AgentMessage[] = [];
-  private settled = false;
+  private _settled = false;
+  private _aborted = false;
   private readonly done: Promise<string>;
   private resolveDone!: (text: string) => void;
   private rejectDone!: (err: unknown) => void;
@@ -31,11 +37,24 @@ export class Turn implements AsyncIterable<string>, PromiseLike<string> {
       this.resolveDone = resolve;
       this.rejectDone = reject;
     });
+    // A consumer that only streams (`for await`) never touches the promise —
+    // keep its rejection from surfacing as an unhandled rejection.
+    this.done.catch(() => {});
   }
 
-  /** Stop this turn. */
+  /** Stop this turn. The turn resolves with the partial text; `aborted` is set. */
   abort(): void {
     this.onAbort();
+  }
+
+  /** True once the turn has resolved or rejected. */
+  get settled(): boolean {
+    return this._settled;
+  }
+
+  /** True when the turn was stopped via `abort()` (it resolves with partial text). */
+  get aborted(): boolean {
+    return this._aborted;
   }
 
   /** Messages produced during this turn (available after it completes). */
@@ -58,49 +77,51 @@ export class Turn implements AsyncIterable<string>, PromiseLike<string> {
 
   /** Fed each agent event by the Chat for the duration of this turn. */
   handleEvent(event: AgentEvent): void {
-    if (this.settled) return;
+    if (this._settled) return;
     switch (event.type) {
       case "message_update": {
-        const sub = (event as { assistantMessageEvent?: { type: string; delta?: string } })
-          .assistantMessageEvent;
-        if (sub?.type === "text_delta" && typeof sub.delta === "string") {
+        const sub = event.assistantMessageEvent;
+        if (sub.type === "text_delta") {
           this.chunks.push(sub.delta);
           this.deltas.push(sub.delta);
-        } else if (sub?.type === "error") {
-          this.fail(new Error("pi reported a streaming error"));
         }
         break;
       }
-      case "tool_execution_start": {
-        const e = event as { toolCallId: string; toolName: string; args: unknown };
+      case "tool_execution_start":
         this.onTool?.({
           type: "start",
-          toolCallId: e.toolCallId,
-          toolName: e.toolName,
-          args: e.args,
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+          args: event.args,
         });
         break;
-      }
-      case "tool_execution_end": {
-        const e = event as {
-          toolCallId: string;
-          toolName: string;
-          result: unknown;
-          isError: boolean;
-        };
+      case "tool_execution_end":
         this.onTool?.({
           type: "end",
-          toolCallId: e.toolCallId,
-          toolName: e.toolName,
-          result: e.result,
-          isError: e.isError,
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+          result: event.result,
+          isError: event.isError,
         });
         break;
-      }
       case "agent_end": {
-        const msgs = (event as { messages?: AgentMessage[] }).messages;
-        if (Array.isArray(msgs)) this.messages = msgs;
-        this.complete();
+        this.messages = event.messages;
+        // The final assistant message carries the outcome: retries happen
+        // upstream, so by agent_end the stop reason is authoritative.
+        const last = [...event.messages]
+          .reverse()
+          .find((m): m is AgentMessage & { stopReason: string; errorMessage?: string } =>
+            (m as { role?: string }).role === "assistant" && "stopReason" in m,
+          );
+        if (last?.stopReason === "aborted") {
+          this._aborted = true;
+          this.complete();
+        } else if (last?.stopReason === "error") {
+          const msg = last.errorMessage ?? "the provider reported an error";
+          this.fail(new WepiError(msg, classifyProviderError(msg)));
+        } else {
+          this.complete();
+        }
         break;
       }
     }
@@ -108,15 +129,15 @@ export class Turn implements AsyncIterable<string>, PromiseLike<string> {
 
   /** Fail the turn (e.g. the prompt rejected). */
   fail(error: unknown): void {
-    if (this.settled) return;
-    this.settled = true;
+    if (this._settled) return;
+    this._settled = true;
     this.deltas.fail(error);
     this.rejectDone(error);
   }
 
   private complete(): void {
-    if (this.settled) return;
-    this.settled = true;
+    if (this._settled) return;
+    this._settled = true;
     this.deltas.close();
     this.resolveDone(this.chunks.join(""));
   }

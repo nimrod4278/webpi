@@ -12,6 +12,6 @@
 export { PiChat } from "./PiChat.js";
 export type { PiChatProps } from "./PiChat.js";
 export { usePiChat } from "./usePiChat.js";
-export type { UsePiChatResult, TranscriptEntry } from "./usePiChat.js";
+export type { UsePiChatOptions, UsePiChatResult, TranscriptEntry } from "./usePiChat.js";
 export { useC2wSandbox } from "./useC2wSandbox.js";
 export type { UseC2wSandboxResult, C2wStatus } from "./useC2wSandbox.js";

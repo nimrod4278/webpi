@@ -1,12 +1,15 @@
 /**
  * `usePiChat` — React binding over the headless `Chat`.
  *
- * Owns a `Chat` instance (created once an `apiKey` is available, disposed on
- * unmount) and turns its streaming `Turn` + `ToolEvent`s into React state: a
- * `transcript` of user/assistant entries that update live as text streams in.
+ * Owns a `Chat` instance (created once credentials are available and
+ * `enabled` isn't false, disposed on unmount) and turns its streaming `Turn`
+ * + `ToolEvent`s into React state: a `transcript` of user/assistant entries
+ * that update live as text streams in.
  *
- * This is the exact behavior of the old vanilla demo's send-loop, lifted into a
- * hook so any UI can consume it. `PiChat` is one such UI built on top.
+ * Note: when an agent-defining option changes (apiKey/baseUrl/model/provider/
+ * systemPrompt/sandbox), the Chat is re-created and its message history starts
+ * fresh; the on-screen transcript is kept for display. Use `persist` to carry
+ * real conversation state across reloads and re-creations.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,8 +27,13 @@ export interface TranscriptEntry {
   tools: ToolEvent[];
 }
 
+export interface UsePiChatOptions extends ChatOptions {
+  /** Set false to defer Chat creation (e.g. while a sandbox is still booting). */
+  enabled?: boolean;
+}
+
 export interface UsePiChatResult {
-  /** The underlying Chat, once created (i.e. once `apiKey` is set). */
+  /** The underlying Chat, once created. */
   chat: Chat | undefined;
   /** True when the Chat is ready to receive messages. */
   ready: boolean;
@@ -35,8 +43,8 @@ export interface UsePiChatResult {
   error: unknown;
   /** User + assistant entries, updated live as text streams. */
   transcript: TranscriptEntry[];
-  /** Send a message and stream the reply into the transcript. No-op if busy/empty. */
-  send: (text: string) => Promise<void>;
+  /** Send a message; resolves false if dropped (busy, empty, or not ready). */
+  send: (text: string) => Promise<boolean>;
   /** Abort the in-flight turn. */
   abort: () => void;
   /** Read the agent's virtual workspace back out. */
@@ -45,10 +53,10 @@ export interface UsePiChatResult {
 
 /**
  * `options` may change every render; the Chat is only (re)created when a field
- * that defines the agent changes (apiKey/model/provider/systemPrompt/sandbox).
- * `files`/`tools` are read from the latest options at creation time.
+ * that defines the agent changes. `files`/`tools`/`persist` are read from the
+ * latest options at creation time.
  */
-export function usePiChat(options: ChatOptions): UsePiChatResult {
+export function usePiChat(options: UsePiChatOptions): UsePiChatResult {
   const [chat, setChat] = useState<Chat | undefined>();
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [busy, setBusy] = useState(false);
@@ -62,20 +70,27 @@ export function usePiChat(options: ChatOptions): UsePiChatResult {
 
   const nextId = () => `m${idRef.current++}`;
 
+  const hasAuth = !!(options.apiKey || options.baseUrl || options.getApiKey);
+  const enabled = options.enabled !== false && hasAuth;
+
   // Create (and re-create) the Chat when the agent-defining options change.
   useEffect(() => {
-    if (!options.apiKey) return;
+    if (!enabled) return;
     let disposed = false;
     let created: Chat | undefined;
     void (async () => {
-      const c = await createChat(optionsRef.current);
-      if (disposed) {
-        c.dispose();
-        return;
+      try {
+        const c = await createChat(optionsRef.current);
+        if (disposed) {
+          c.dispose();
+          return;
+        }
+        created = c;
+        chatRef.current = c;
+        setChat(c);
+      } catch (err) {
+        if (!disposed) setError(err);
       }
-      created = c;
-      chatRef.current = c;
-      setChat(c);
     })();
     return () => {
       disposed = true;
@@ -85,17 +100,20 @@ export function usePiChat(options: ChatOptions): UsePiChatResult {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    enabled,
     options.apiKey,
+    options.baseUrl,
     options.model,
     options.provider,
     options.systemPrompt,
     options.sandbox,
+    typeof options.persist === "string" ? options.persist : options.persist?.id,
   ]);
 
-  const send = useCallback(async (text: string) => {
+  const send = useCallback(async (text: string): Promise<boolean> => {
     const c = chatRef.current;
     const trimmed = text.trim();
-    if (!c || busyRef.current || !trimmed) return;
+    if (!c || busyRef.current || !trimmed) return false;
 
     busyRef.current = true;
     setBusy(true);
@@ -118,7 +136,7 @@ export function usePiChat(options: ChatOptions): UsePiChatResult {
       for await (const delta of turn) {
         patch((e) => ({ ...e, text: e.text + delta }));
       }
-      patch((e) => ({ ...e, streaming: false }));
+      patch((e) => ({ ...e, streaming: false, text: turn.aborted ? e.text + "\n[stopped]" : e.text }));
     } catch (err) {
       setError(err);
       patch((e) => ({ ...e, streaming: false, text: `${e.text}\n[error] ${String(err)}` }));
@@ -126,6 +144,7 @@ export function usePiChat(options: ChatOptions): UsePiChatResult {
       busyRef.current = false;
       setBusy(false);
     }
+    return true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -3,25 +3,30 @@
  * `for await`. Used to turn pushed pi events / text deltas into an
  * `AsyncIterable`. Backpressure-free (POC); values buffer until consumed.
  */
+interface Waiter<T> {
+  resolve: (r: IteratorResult<T>) => void;
+  reject: (err: unknown) => void;
+}
+
 export class AsyncQueue<T> implements AsyncIterable<T> {
   private values: T[] = [];
-  private resolvers: Array<(r: IteratorResult<T>) => void> = [];
+  private waiters: Waiter<T>[] = [];
   private closed = false;
   private error: unknown;
 
   push(value: T): void {
     if (this.closed) return;
-    const resolve = this.resolvers.shift();
-    if (resolve) resolve({ value, done: false });
+    const waiter = this.waiters.shift();
+    if (waiter) waiter.resolve({ value, done: false });
     else this.values.push(value);
   }
 
   /** Close the queue; pending/iterating consumers complete normally. */
   close(): void {
     this.closed = true;
-    let resolve;
-    while ((resolve = this.resolvers.shift())) {
-      resolve({ value: undefined as never, done: true });
+    let waiter;
+    while ((waiter = this.waiters.shift())) {
+      waiter.resolve({ value: undefined as never, done: true });
     }
   }
 
@@ -29,20 +34,23 @@ export class AsyncQueue<T> implements AsyncIterable<T> {
   fail(error: unknown): void {
     this.error = error;
     this.closed = true;
-    // The next `next()` call observes the error.
-    const resolve = this.resolvers.shift();
-    if (resolve) resolve({ value: undefined as never, done: true });
+    // Consumers already blocked on next() must see the error too, not a
+    // clean end-of-stream.
+    let waiter;
+    while ((waiter = this.waiters.shift())) {
+      waiter.reject(error);
+    }
   }
 
   [Symbol.asyncIterator](): AsyncIterator<T> {
     return {
       next: (): Promise<IteratorResult<T>> => {
-        if (this.error) return Promise.reject(this.error);
         if (this.values.length > 0) {
           return Promise.resolve({ value: this.values.shift()!, done: false });
         }
+        if (this.error) return Promise.reject(this.error);
         if (this.closed) return Promise.resolve({ value: undefined as never, done: true });
-        return new Promise((resolve) => this.resolvers.push(resolve));
+        return new Promise((resolve, reject) => this.waiters.push({ resolve, reject }));
       },
     };
   }

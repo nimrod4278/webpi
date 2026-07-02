@@ -18,8 +18,10 @@ import { usePiChat } from "./usePiChat.js";
 import { useC2wSandbox } from "./useC2wSandbox.js";
 
 export interface PiChatProps {
-  /** Provider API key (browser-direct). Required. */
-  apiKey: string;
+  /** Provider API key (browser-direct). Optional when `baseUrl` is set. */
+  apiKey?: string;
+  /** Route provider requests through your own endpoint (proxy injects the key). */
+  baseUrl?: string;
   /** Seed the virtual workspace, keyed by relative path. */
   files?: Record<string, string>;
   /** Model id (default: a current Claude). */
@@ -28,6 +30,8 @@ export interface PiChatProps {
   provider?: string;
   /** Override the system prompt. */
   systemPrompt?: string;
+  /** Persist + resume the conversation (IndexedDB id, or { id, store }). */
+  persist?: PersistOption;
   /** Explicit sandbox for the bash tool. Overrides the built-in c2w sandbox. */
   sandbox?: Sandbox;
   /** Boot a container2wasm bash sandbox automatically. Default: true. */
@@ -37,6 +41,8 @@ export interface PiChatProps {
   /** Extra class on the root element. */
   className?: string;
 }
+
+type PersistOption = NonNullable<import("../chat.js").ChatOptions["persist"]>;
 
 /** Render tool args / results compactly for display (ported from the vanilla demo). */
 function preview(value: unknown, max = 2000): string {
@@ -71,7 +77,7 @@ function ToolLine({ event }: { event: ToolEvent }) {
 }
 
 export function PiChat(props: PiChatProps) {
-  const { apiKey, files, model, provider, systemPrompt, sandbox, useC2w, placeholder, className } = props;
+  const { apiKey, baseUrl, files, model, provider, systemPrompt, persist, sandbox, useC2w, placeholder, className } = props;
 
   const wantC2w = useC2w !== false && !sandbox;
   const c2w = useC2wSandbox({ enabled: wantC2w });
@@ -79,8 +85,17 @@ export function PiChat(props: PiChatProps) {
 
   // When we intend to use c2w, hold off creating the Chat until the sandbox
   // instance exists, so the agent is wired with bash (not the NullSandbox fallback).
-  const gatedKey = wantC2w && !effectiveSandbox ? "" : apiKey;
-  const pi = usePiChat({ apiKey: gatedKey, files, model, provider, systemPrompt, sandbox: effectiveSandbox });
+  const pi = usePiChat({
+    enabled: !wantC2w || !!effectiveSandbox,
+    apiKey,
+    baseUrl,
+    files,
+    model,
+    provider,
+    systemPrompt,
+    persist,
+    sandbox: effectiveSandbox,
+  });
 
   const [draft, setDraft] = useState("");
 
@@ -138,7 +153,11 @@ export function PiChat(props: PiChatProps) {
       {wantC2w && (
         <p className="wepi-status">sandbox: {c2w.status}{c2w.log ? ` — ${c2w.log}` : ""}</p>
       )}
-      {!pi.ready && <p className="wepi-status">agent: {gatedKey ? "starting…" : "waiting for sandbox…"}</p>}
+      {!pi.ready && (
+        <p className="wepi-status">
+          agent: {wantC2w && !effectiveSandbox ? "waiting for sandbox…" : "starting…"}
+        </p>
+      )}
     </div>
   );
 }
