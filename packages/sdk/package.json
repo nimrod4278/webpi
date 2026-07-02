@@ -20,6 +20,18 @@
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
     },
+    "./webllm": {
+      "types": "./dist/webllm/index.d.ts",
+      "import": "./dist/webllm/index.js"
+    },
+    "./wllama": {
+      "types": "./dist/wllama/index.d.ts",
+      "import": "./dist/wllama/index.js"
+    },
+    "./litert": {
+      "types": "./dist/litert/index.d.ts",
+      "import": "./dist/litert/index.js"
+    },
     "./react/PiChat.css": "./src/react/PiChat.css"
   },
   "files": [
@@ -38,10 +50,22 @@
     "@earendil-works/pi-ai": "0.80.2"
   },
   "peerDependencies": {
+    "@litert-lm/core": ">=0.12.0",
+    "@mlc-ai/web-llm": ">=0.2.79",
+    "@wllama/wllama": ">=3.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
   "peerDependenciesMeta": {
+    "@litert-lm/core": {
+      "optional": true
+    },
+    "@mlc-ai/web-llm": {
+      "optional": true
+    },
+    "@wllama/wllama": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },
