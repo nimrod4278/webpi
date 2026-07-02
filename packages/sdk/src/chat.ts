@@ -8,6 +8,7 @@
 
 import { Agent, convertToLlm } from "@earendil-works/pi-agent-core";
 import type { AgentEvent, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
+import type { Api, Model, Provider } from "@earendil-works/pi-ai";
 import { buildModel } from "./model.js";
 import { VirtualFS, createFileTools } from "./tools/fs.js";
 import { createBashTool } from "./tools/bash.js";
@@ -36,10 +37,14 @@ export interface ChatOptions {
   getApiKey?: (provider: string) => string | undefined | Promise<string | undefined>;
   /** Route provider requests through your own endpoint (proxy injects the key). */
   baseUrl?: string;
-  /** Model id (default: a current Claude). */
-  model?: string;
-  /** pi-ai provider id (default: "anthropic"). */
-  provider?: string;
+  /** Model id from the provider catalog (default: a sensible per-provider choice), or a full pi-ai `Model` object. */
+  model?: string | Model<Api>;
+  /**
+   * Cloud provider id (default: "anthropic"; also openai, google, mistral, groq,
+   * xai, deepseek, openrouter), or a pi-ai `Provider` object for anything else —
+   * incl. a local engine from `wepi/webllm`.
+   */
+  provider?: string | Provider;
   /** Override the system prompt. */
   systemPrompt?: string;
   /** Seed the virtual workspace, keyed by relative path. */
