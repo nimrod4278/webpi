@@ -9,9 +9,13 @@ const coiHeaders = {
   "Cross-Origin-Embedder-Policy": "credentialless",
 };
 
+// Honor a harness/hosting-assigned PORT (Vite doesn't read it by default) so the
+// dev server can fall off an occupied port; otherwise Vite picks its own.
+const port = process.env.PORT ? Number(process.env.PORT) : undefined;
+
 export default defineConfig({
   plugins: [react()],
-  server: { headers: coiHeaders },
+  server: { port, headers: coiHeaders },
   preview: { headers: coiHeaders },
   define: {
     "process.env": {},
