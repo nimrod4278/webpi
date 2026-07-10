@@ -3,3 +3,11 @@ dist/
 *.wasm
 apps/*/public/pi.wasm
 .DS_Store
+
+# Sandbox runtime assets — fetched on demand via `wepi-fetch-assets`
+# (packages/sdk/scripts/fetch-assets.mjs). Kept out of git so the repo stays
+# lean; run `pnpm --filter wepi-client fetch-assets` to repopulate them.
+apps/client/public/*.wasm.gzip
+apps/client/public/worker.js
+apps/client/public/alpine/
+apps/client/public/alpine-amd64/
