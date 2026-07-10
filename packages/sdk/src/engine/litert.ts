@@ -59,8 +59,8 @@ import type {
   TextContent,
   Tool,
   ToolCall,
-  Usage,
 } from "@earendil-works/pi-ai";
+import { ZERO_USAGE } from "./openai.js";
 
 // ---------------------------------------------------------------------------
 // Structural mirror of the @litert-lm/core shapes we build/read. These match
@@ -149,14 +149,6 @@ const KEYLESS_AUTH: ProviderAuth = {
   },
 };
 
-const ZERO_USAGE: Usage = {
-  input: 0,
-  output: 0,
-  cacheRead: 0,
-  cacheWrite: 0,
-  totalTokens: 0,
-  cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-};
 
 /**
  * Build a keyless pi-ai `Provider` backed by a local LiteRT-LM (Gemma 4) engine.
@@ -164,10 +156,19 @@ const ZERO_USAGE: Usage = {
  */
 export async function createLiteRTProvider(
   options: CreateLiteRTProviderOptions,
-): Promise<{ provider: Provider; modelId: string; engine: LiteRTEngine }> {
+): Promise<{ provider: Provider; modelId: string; engine: LiteRTEngine; dispose: () => Promise<void> }> {
   const modelId = options.modelId ?? defaultModelId(options);
   const engine = options.engine ?? (await loadEngine(options));
   const maxTokens = options.maxTokens ?? 4096;
+
+  // The .litertlm bundle stays resident until the engine is deleted —
+  // callers that swap models must dispose the old provider. Idempotent.
+  let disposed = false;
+  const dispose = async () => {
+    if (disposed) return;
+    disposed = true;
+    await engine.delete?.();
+  };
 
   const model: Model<Api> = {
     id: modelId,
@@ -194,7 +195,7 @@ export async function createLiteRTProvider(
     api: { stream, streamSimple: stream },
   });
 
-  return { provider, modelId, engine };
+  return { provider, modelId, engine, dispose };
 }
 
 function defaultModelId(options: CreateLiteRTProviderOptions): string {

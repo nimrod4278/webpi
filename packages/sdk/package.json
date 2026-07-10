@@ -1,7 +1,7 @@
 {
   "name": "wepi",
   "version": "0.0.1",
-  "description": "Minimal POC SDK for chatting with the pi coding agent entirely in the browser, via container2wasm. Ships headless core + React components.",
+  "description": "Minimal POC SDK for chatting with the pi coding agent entirely in the browser, via container2wasm. Ships headless core + React hooks.",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -13,30 +13,34 @@
       "import": "./dist/index.js"
     },
     "./c2w": {
-      "types": "./dist/c2w/index.d.ts",
-      "import": "./dist/c2w/index.js"
+      "types": "./dist/sandbox/c2w.d.ts",
+      "import": "./dist/sandbox/c2w.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
     },
     "./webllm": {
-      "types": "./dist/webllm/index.d.ts",
-      "import": "./dist/webllm/index.js"
+      "types": "./dist/engine/webllm.d.ts",
+      "import": "./dist/engine/webllm.js"
     },
     "./wllama": {
-      "types": "./dist/wllama/index.d.ts",
-      "import": "./dist/wllama/index.js"
+      "types": "./dist/engine/wllama.d.ts",
+      "import": "./dist/engine/wllama.js"
     },
     "./litert": {
-      "types": "./dist/litert/index.d.ts",
-      "import": "./dist/litert/index.js"
-    },
-    "./react/PiChat.css": "./src/react/PiChat.css"
+      "types": "./dist/engine/litert.d.ts",
+      "import": "./dist/engine/litert.js"
+    }
+  },
+  "bin": {
+    "wepi-build-image": "./scripts/build-image.mjs",
+    "wepi-fetch-assets": "./scripts/fetch-assets.mjs"
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "scripts"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

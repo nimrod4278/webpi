@@ -10,15 +10,22 @@ import { Agent, convertToLlm } from "@earendil-works/pi-agent-core";
 import type { AgentEvent, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
 import type { Api, Model, Provider } from "@earendil-works/pi-ai";
 import { buildModel } from "./model.js";
+import { INVALID_TOOL_ARGS } from "./engine/openai.js";
 import { VirtualFS, createFileTools } from "./tools/fs.js";
 import { createBashTool } from "./tools/bash.js";
-import { NullSandbox, type Sandbox } from "./sandbox.js";
+import { NullSandbox, type Sandbox } from "./sandbox/index.js";
 import { Turn, type ToolEvent } from "./turn.js";
 import { WepiError } from "./errors.js";
-import type { ChatSnapshot, ChatStore } from "./store.js";
+import type { ChatSnapshot, ChatStore } from "./store/index.js";
 import { IndexedDBStore } from "./store/indexeddb.js";
 
 const DEFAULT_WORKDIR = "/workspace";
+
+/** Built-in tool names selectable via `ChatOptions.defaultTools`. */
+export type DefaultToolName = "read" | "write" | "edit" | "ls" | "grep" | "bash";
+
+/** Consecutive unparseable tool calls before the model is told to stop trying. */
+const MAX_INVALID_TOOL_CALL_STREAK = 3;
 
 function defaultSystemPrompt(workdir: string): string {
   return (
@@ -53,8 +60,18 @@ export interface ChatOptions {
   sandbox?: Sandbox;
   /** Where the workspace is mirrored inside the sandbox (default /workspace). */
   workdir?: string;
-  /** Extra agent tools to expose. */
-  tools?: AgentTool[];
+  /**
+   * Extra agent tools to expose. Pass a function to receive the chat's
+   * VirtualFS — for app tools that write artifacts into the workspace.
+   */
+  tools?: AgentTool[] | ((fs: VirtualFS) => AgentTool[]);
+  /**
+   * Which built-in tools to expose (default: all). Pass a subset to shrink the
+   * schema overhead for small on-device models, or `false` for none — e.g. an
+   * app that provides its own single-purpose tool via `tools`. Excluding
+   * "bash" skips the sandbox-backed shell entirely.
+   */
+  defaultTools?: DefaultToolName[] | false;
   /**
    * Persist the conversation + workspace and resume on reload. A string id
    * uses the built-in IndexedDB store; pass `{ id, store }` to plug any
@@ -106,6 +123,7 @@ export class Chat {
   private readonly onPersistError: (error: unknown) => void;
   private current?: Turn;
   private restored = false;
+  private invalidToolCallStreak = 0;
 
   constructor(options: ChatOptions) {
     this.fs = new VirtualFS(options.files ?? {});
@@ -135,10 +153,13 @@ export class Chat {
     // Only mirror the workspace into real sandboxes — syncing into the
     // NullSandbox would just prepend "bash unavailable" noise to every call.
     const syncFs = sandbox instanceof NullSandbox ? undefined : this.fs;
+    const enabled = (name: DefaultToolName) =>
+      options.defaultTools === undefined || (options.defaultTools !== false && options.defaultTools.includes(name));
+    const extraTools = typeof options.tools === "function" ? options.tools(this.fs) : (options.tools ?? []);
     const tools: AgentTool[] = [
-      ...createFileTools(this.fs),
-      createBashTool(sandbox, { fs: syncFs, workdir }),
-      ...(options.tools ?? []),
+      ...createFileTools(this.fs).filter((t) => enabled(t.name as DefaultToolName)),
+      ...(enabled("bash") ? [createBashTool(sandbox, { fs: syncFs, workdir })] : []),
+      ...extraTools,
     ];
     this.agent = new Agent({
       initialState: {
@@ -149,9 +170,36 @@ export class Chat {
       streamFn,
       getApiKey,
       convertToLlm,
+      // Local engines mark unparseable tool-call JSON with INVALID_TOOL_ARGS
+      // (see engine/openai.ts). Tools with required params already fail
+      // schema validation on it (the error echoes the raw arguments back to
+      // the model); this guard catches the rest — all-optional schemas where
+      // `{}` would silently "succeed" — and turns them into corrective error
+      // results the model can react to.
+      beforeToolCall: async ({ toolCall }) => {
+        const args = toolCall.arguments as Record<string, unknown> | undefined;
+        const sentinel = args?.[INVALID_TOOL_ARGS];
+        if (typeof sentinel !== "string") return undefined;
+        const guidance =
+          this.invalidToolCallStreak >= MAX_INVALID_TOOL_CALL_STREAK
+            ? " Do not call tools again this turn — reply in plain text with what you have so far."
+            : " Re-issue the tool call with valid, complete JSON arguments.";
+        return { block: true, reason: sentinel + guidance };
+      },
     });
 
     this.agent.subscribe((event) => {
+      // Streak of unparseable tool calls (both validation-rejected and
+      // guard-blocked paths emit these events); any clean result resets it.
+      if (event.type === "tool_execution_start") {
+        const args = event.args as Record<string, unknown> | undefined;
+        if (typeof args?.[INVALID_TOOL_ARGS] === "string") this.invalidToolCallStreak++;
+      } else if (event.type === "tool_execution_end" && !event.isError) {
+        this.invalidToolCallStreak = 0;
+      } else if (event.type === "agent_end") {
+        this.invalidToolCallStreak = 0;
+      }
+
       for (const listener of this.listeners) listener(event);
       if (event.type === "agent_end") this.persistNow();
     });
@@ -244,6 +292,18 @@ export class Chat {
   /** Read the workspace back out, keyed by relative path. */
   files(): Record<string, string> {
     return this.fs.snapshot();
+  }
+
+  /**
+   * Clear the conversation history and persist the empty transcript. The
+   * workspace files survive — resetting frees the model's context without
+   * losing what the agent built. (For local engines this is the escape hatch
+   * when the context window fills up.)
+   */
+  reset(): void {
+    this.agent.abort();
+    this.agent.state.messages = [];
+    this.persistNow();
   }
 
   /** Tear down: abort any in-flight turn and flush a final snapshot. */

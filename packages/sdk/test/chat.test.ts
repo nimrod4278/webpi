@@ -4,9 +4,12 @@
  * its own faux provider responses.
  */
 import { describe, expect, it, vi } from "vitest";
-import { createModels, fauxProvider, fauxAssistantMessage, fauxToolCall } from "@earendil-works/pi-ai";
+import { createModels, fauxProvider, fauxAssistantMessage, fauxToolCall, Type } from "@earendil-works/pi-ai";
+import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { createChat, Chat } from "../src/chat.js";
-import type { ChatSnapshot, ChatStore } from "../src/store.js";
+import { INVALID_TOOL_ARGS } from "../src/engine/openai.js";
+import type { VirtualFS } from "../src/tools/fs.js";
+import type { ChatSnapshot, ChatStore } from "../src/store/index.js";
 
 const holder = vi.hoisted(() => ({
   build: null as null | (() => unknown),
@@ -100,6 +103,76 @@ describe("Chat", () => {
     unsub();
     expect(types).toContain("agent_start");
     expect(types).toContain("agent_end");
+    chat.dispose();
+  });
+
+  it("blocks tool calls carrying the INVALID_TOOL_ARGS sentinel with corrective feedback", async () => {
+    // `ls` takes no required params, so `{}` from a botched parse would
+    // otherwise pass schema validation and execute silently.
+    useFauxModel([
+      fauxAssistantMessage([fauxToolCall("ls", { [INVALID_TOOL_ARGS]: "Tool call arguments were not valid JSON." })]),
+      fauxAssistantMessage("Sorry, retrying."),
+    ]);
+    const chat = new Chat({ apiKey: "x" });
+    await chat.send("list files");
+    const transcript = JSON.stringify(chat.messages);
+    expect(transcript).toContain("not valid JSON");
+    expect(transcript).toContain("Re-issue the tool call");
+    chat.dispose();
+  });
+
+  it("defaultTools: false hides the built-in tools", async () => {
+    useFauxModel([
+      fauxAssistantMessage([fauxToolCall("ls", {})]),
+      fauxAssistantMessage("done"),
+    ]);
+    const chat = new Chat({ apiKey: "x", defaultTools: false });
+    await chat.send("list files");
+    expect(JSON.stringify(chat.messages)).toContain("Tool ls not found");
+    chat.dispose();
+  });
+
+  it("resolves a tools factory with the chat's VirtualFS", async () => {
+    const params = Type.Object({});
+    const makeTools = (fs: VirtualFS): AgentTool[] => [
+      {
+        name: "make_artifact",
+        label: "Make artifact",
+        description: "Write a fixed artifact into the workspace.",
+        parameters: params,
+        execute: async () => {
+          fs.write("artifact.html", "<html/>");
+          return { content: [{ type: "text", text: "ok" }], details: undefined };
+        },
+      } as AgentTool,
+    ];
+    useFauxModel([
+      fauxAssistantMessage([fauxToolCall("make_artifact", {})]),
+      fauxAssistantMessage("made it"),
+    ]);
+    const chat = new Chat({ apiKey: "x", defaultTools: false, tools: makeTools });
+    await chat.send("make the artifact");
+    expect(chat.files()["artifact.html"]).toBe("<html/>");
+    chat.dispose();
+  });
+
+  it("reset() clears the conversation but keeps the workspace, and persists", async () => {
+    const store = new MemoryStore();
+    useFauxModel([
+      fauxAssistantMessage([fauxToolCall("write", { path: "dash.html", content: "<html/>" })]),
+      fauxAssistantMessage("Built the dashboard."),
+    ]);
+    const chat = await createChat({ apiKey: "x", persist: { id: "r1", store } });
+    await chat.send("build a dashboard");
+    expect(chat.messages.length).toBeGreaterThan(0);
+
+    chat.reset();
+
+    expect(chat.messages).toHaveLength(0);
+    expect(chat.metrics.contextPct).toBe(0);
+    expect(chat.files()["dash.html"]).toBe("<html/>");
+    await vi.waitFor(() => expect(store.data.get("r1")!.messages).toHaveLength(0));
+    expect(store.data.get("r1")!.files["dash.html"]).toBe("<html/>");
     chat.dispose();
   });
 });

@@ -23,7 +23,7 @@
  * responsibility; point `assetsBaseUrl` at wherever they are served.
  */
 
-import type { Sandbox, ExecResult } from "../sandbox.js";
+import type { Sandbox, ExecResult } from "./index.js";
 import { WepiError } from "../errors.js";
 import { toBase64, fromBase64, shellQuote as shq } from "../base64.js";
 

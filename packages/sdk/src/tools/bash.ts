@@ -15,7 +15,7 @@
 
 import { Type, type Static } from "@earendil-works/pi-ai";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import type { Sandbox } from "../sandbox.js";
+import type { Sandbox } from "../sandbox/index.js";
 import type { VirtualFS } from "./fs.js";
 import { toBase64, fromBase64, shellQuote as shq } from "../base64.js";
 import { WepiError } from "../errors.js";

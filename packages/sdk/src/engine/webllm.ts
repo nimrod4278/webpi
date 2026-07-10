@@ -13,7 +13,7 @@
  * `createProvider`), translating pi-ai's `Context` into OpenAI chat-completion
  * params and the engine's streamed OpenAI-shaped chunks back into pi-ai's
  * `AssistantMessageEvent` stream (shared with `wepi/wllama` — see
- * `../local/openai-engine.ts`). That's the same `Provider`-object seam
+ * `./openai.ts`). That's the same `Provider`-object seam
  * `createChat({ provider })` uses for any cloud provider — local is just a
  * keyless provider whose transport is a WebGPU engine instead of HTTP.
  *
@@ -34,8 +34,8 @@
 
 import { createProvider } from "@earendil-works/pi-ai";
 import type { Api, Context, Model, Provider, ProviderAuth, StreamOptions } from "@earendil-works/pi-ai";
-import { runLocalStream } from "../local/openai-engine.js";
-import type { LocalChatEngine, OpenAIChatChunk } from "../local/openai-engine.js";
+import { runLocalStream } from "./openai.js";
+import type { LocalChatEngine, OpenAIChatChunk } from "./openai.js";
 
 /** A progress report emitted while a local model's weights download/compile. */
 export interface WebLLMProgress {
@@ -56,6 +56,8 @@ export interface WebLLMEngine {
     };
   };
   interruptGenerate?(): void | Promise<void>;
+  /** MLCEngine's "unload the model and free GPU memory". */
+  unload?(): Promise<void>;
 }
 
 export interface CreateWebLLMProviderOptions {
@@ -91,9 +93,18 @@ const KEYLESS_AUTH: ProviderAuth = {
  */
 export async function createWebLLMProvider(
   options: CreateWebLLMProviderOptions,
-): Promise<{ provider: Provider; modelId: string; engine: WebLLMEngine }> {
+): Promise<{ provider: Provider; modelId: string; engine: WebLLMEngine; dispose: () => Promise<void> }> {
   const modelId = options.model ?? "local";
   const engine = options.engine ?? (await loadEngine(options, modelId));
+
+  // Weights + KV cache stay resident in GPU memory until explicitly unloaded —
+  // callers that swap models must dispose the old provider. Idempotent.
+  let disposed = false;
+  const dispose = async () => {
+    if (disposed) return;
+    disposed = true;
+    await engine.unload?.();
+  };
 
   const model: Model<Api> = {
     id: modelId,
@@ -132,7 +143,7 @@ export async function createWebLLMProvider(
     api: { stream, streamSimple: stream },
   });
 
-  return { provider, modelId, engine };
+  return { provider, modelId, engine, dispose };
 }
 
 /** Lazy-load @mlc-ai/web-llm (variable specifier keeps it out of the core graph). */

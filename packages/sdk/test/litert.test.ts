@@ -15,7 +15,7 @@
  * runtime shifts, only the converters + this file change.
  */
 import { describe, expect, it } from "vitest";
-import { createLiteRTProvider, type LiteRTMessage, type LiteRTEngine } from "../src/litert/index.js";
+import { createLiteRTProvider, type LiteRTMessage, type LiteRTEngine } from "../src/engine/litert.js";
 
 /** An engine that records the conversation config + streamed input, and replays chunks. */
 function fakeEngine(chunks: LiteRTMessage[]): {

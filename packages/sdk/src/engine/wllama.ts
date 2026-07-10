@@ -17,7 +17,7 @@
  * models, so the newest open-source releases lag behind. llama.cpp gets new
  * architectures first and every GGUF on Hugging Face works with zero
  * conversion — day-one model availability. Chunk translation is shared with
- * webllm (`../local/openai-engine.ts`); wllama's `createChatCompletion` is
+ * webllm (`./openai.ts`); wllama's `createChatCompletion` is
  * OpenAI-shaped, so the adapter here is just transport wiring.
  *
  * @wllama/wllama is an OPTIONAL peer dependency: it is only loaded here. Either
@@ -37,8 +37,8 @@
 
 import { createProvider } from "@earendil-works/pi-ai";
 import type { Api, Context, Model, Provider, ProviderAuth, StreamOptions } from "@earendil-works/pi-ai";
-import { runLocalStream } from "../local/openai-engine.js";
-import type { LocalChatEngine, OpenAIChatChunk } from "../local/openai-engine.js";
+import { runLocalStream } from "./openai.js";
+import type { LocalChatEngine, OpenAIChatChunk } from "./openai.js";
 
 /** A progress report emitted while the GGUF downloads. */
 export interface WllamaProgress {
@@ -54,6 +54,8 @@ export interface WllamaProgress {
  */
 export interface WllamaEngine {
   createChatCompletion(options: any): Promise<any>;
+  /** wllama's "unload the model and free all memory" (safe if no model loaded). */
+  exit?(): Promise<void>;
 }
 
 export interface CreateWllamaProviderOptions {
@@ -108,9 +110,19 @@ const KEYLESS_AUTH: ProviderAuth = {
  */
 export async function createWllamaProvider(
   options: CreateWllamaProviderOptions,
-): Promise<{ provider: Provider; modelId: string; engine: WllamaEngine }> {
+): Promise<{ provider: Provider; modelId: string; engine: WllamaEngine; dispose: () => Promise<void> }> {
   const modelId = options.modelId ?? defaultModelId(options);
   const engine = options.engine ?? (await loadEngine(options));
+
+  // The GGUF lives in WASM/GPU memory until explicitly freed — callers that
+  // swap models must dispose the old provider or the weights stack up until
+  // the tab OOMs. Idempotent: React unmount/strict-mode may call it twice.
+  let disposed = false;
+  const dispose = async () => {
+    if (disposed) return;
+    disposed = true;
+    await engine.exit?.();
+  };
 
   const model: Model<Api> = {
     id: modelId,
@@ -128,9 +140,17 @@ export async function createWllamaProvider(
   const chatEngine: LocalChatEngine = {
     // wllama takes the abort signal in-band; llama.cpp stops decoding on abort,
     // so no separate interrupt() is needed.
+    //
+    // cache_prompt: llama.cpp keeps the KV cache of the previous request and
+    // only prefills the suffix that changed. The agent's history is
+    // append-only between turns, so follow-up turns skip re-decoding the whole
+    // conversation — the dominant time-to-first-token cost on WASM. (When
+    // context budgeting trims the history the prefix shifts, the cache misses
+    // once, and llama.cpp rebuilds it — correct, just briefly slower.)
     createStream: (request, signal) =>
       engine.createChatCompletion({
         ...request,
+        cache_prompt: true,
         abortSignal: signal,
       }) as Promise<AsyncIterable<OpenAIChatChunk>>,
   };
@@ -148,7 +168,7 @@ export async function createWllamaProvider(
     api: { stream, streamSimple: stream },
   });
 
-  return { provider, modelId, engine };
+  return { provider, modelId, engine, dispose };
 }
 
 function defaultModelId(options: CreateWllamaProviderOptions): string {

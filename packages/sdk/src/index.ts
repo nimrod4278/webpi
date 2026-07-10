@@ -9,22 +9,28 @@
  */
 
 export { createChat, Chat } from "./chat.js";
-export type { ChatOptions, SendOptions, ChatMetrics } from "./chat.js";
+export type { ChatOptions, SendOptions, ChatMetrics, DefaultToolName } from "./chat.js";
+// Marker key local engines put on unparseable tool-call arguments (see chat.ts guard).
+export { INVALID_TOOL_ARGS } from "./engine/openai.js";
 export { Turn } from "./turn.js";
 export type { ToolEvent } from "./turn.js";
 export { VirtualFS, createFileTools } from "./tools/fs.js";
 export type { FSChange } from "./tools/fs.js";
 export { createBashTool } from "./tools/bash.js";
 export type { BashToolOptions } from "./tools/bash.js";
-export { NullSandbox } from "./sandbox.js";
-export type { Sandbox, ExecResult } from "./sandbox.js";
+export { NullSandbox } from "./sandbox/index.js";
+export type { Sandbox, ExecResult } from "./sandbox/index.js";
 export { buildModel } from "./model.js";
 export type { ModelConfig, BuiltModel } from "./model.js";
 // Re-exported for consumers injecting a custom/local provider (e.g. wepi/webllm).
 export type { Api, Model, Provider } from "@earendil-works/pi-ai";
+// Re-exported for consumers defining custom agent tools (ChatOptions.tools).
+export { Type } from "@earendil-works/pi-ai";
+export type { Static } from "@earendil-works/pi-ai";
+export type { AgentTool, AgentToolResult } from "@earendil-works/pi-agent-core";
 export { WepiError } from "./errors.js";
 export type { WepiErrorCode } from "./errors.js";
-export type { ChatStore, ChatSnapshot } from "./store.js";
+export type { ChatStore, ChatSnapshot } from "./store/index.js";
 export { IndexedDBStore } from "./store/indexeddb.js";
 
 import { createChat, type ChatOptions } from "./chat.js";

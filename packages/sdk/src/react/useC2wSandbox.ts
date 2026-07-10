@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { C2wSandbox, type C2wSandboxOptions } from "../c2w/index.js";
+import { C2wSandbox, type C2wSandboxOptions } from "../sandbox/c2w.js";
 
 export type C2wStatus = "idle" | "booting" | "warming" | "ready" | "error";
 
