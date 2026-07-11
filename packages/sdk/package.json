@@ -4,6 +4,29 @@
   "description": "Minimal POC SDK for chatting with the pi coding agent entirely in the browser, via container2wasm. Ships headless core + React hooks.",
   "type": "module",
   "license": "MIT",
+  "author": "Nimrod Feldman <nimrod.feldman@gmail.com>",
+  "homepage": "https://github.com/nimrod4278/webpi#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nimrod4278/webpi.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/nimrod4278/webpi/issues"
+  },
+  "keywords": [
+    "pi",
+    "coding-agent",
+    "agent",
+    "browser",
+    "wasm",
+    "webassembly",
+    "container2wasm",
+    "sandbox",
+    "llm",
+    "webllm",
+    "wllama"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
