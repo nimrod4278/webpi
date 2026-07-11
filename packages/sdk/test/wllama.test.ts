@@ -6,10 +6,10 @@
  *   2. Unlike webllm, the system prompt stays a real `system` message even when
  *      tools are present (llama.cpp chat templates accept both).
  *   3. The chunk → AssistantMessageEvent translation (text + tool call), which
- *      is shared with webllm via src/local/openai-engine.ts.
+ *      is shared with webllm via src/engine/openai.ts.
  */
 import { describe, expect, it } from "vitest";
-import { createWllamaProvider, type WllamaEngine } from "../src/wllama/index.js";
+import { createWllamaProvider, type WllamaEngine } from "../src/engine/wllama.js";
 
 /** An engine that records requests and replays a scripted chunk stream. */
 function fakeEngine(chunks: unknown[]): { engine: WllamaEngine; requests: any[] } {
@@ -48,6 +48,21 @@ describe("wepi/wllama provider", () => {
     expect(sent.tools[0].function.name).toBe("bash");
     expect(sent.tool_choice).toBe("auto");
     expect(sent.stream).toBe(true);
+  });
+
+  it("enables llama.cpp prompt caching on every request", async () => {
+    const { engine, requests } = fakeEngine([
+      { choices: [{ delta: { content: "hi" } }] },
+      { choices: [{ delta: {}, finish_reason: "stop" }] },
+    ]);
+    const { provider } = await createWllamaProvider({ engine, modelId: "test" });
+    const model = provider.getModels()[0];
+
+    await provider.stream(model, { messages: [userMessage] }, {}).result();
+
+    // Without cache_prompt llama.cpp re-prefills the whole conversation each
+    // turn — the dominant TTFT cost in the agent loop.
+    expect(requests[0].cache_prompt).toBe(true);
   });
 
   it("forwards the abort signal in-band as `abortSignal`", async () => {
@@ -100,5 +115,27 @@ describe("wepi/wllama provider", () => {
   it("requires a model source or a pre-loaded engine", async () => {
     await expect(createWllamaProvider({})).rejects.toThrow(/model source|engine/);
     await expect(createWllamaProvider({ repo: "some/repo" })).rejects.toThrow(/wasmUrl/);
+  });
+
+  it("dispose() frees the engine exactly once (idempotent)", async () => {
+    let exits = 0;
+    const engine: WllamaEngine = {
+      async createChatCompletion() {
+        return (async function* () {})();
+      },
+      async exit() {
+        exits++;
+      },
+    };
+    const { dispose } = await createWllamaProvider({ engine, modelId: "test" });
+    await dispose();
+    await dispose();
+    expect(exits).toBe(1);
+  });
+
+  it("dispose() is a no-op for engines without exit()", async () => {
+    const { engine } = fakeEngine([]);
+    const { dispose } = await createWllamaProvider({ engine, modelId: "test" });
+    await expect(dispose()).resolves.toBeUndefined();
   });
 });

@@ -6,7 +6,7 @@
  * anywhere (including SSR).
  */
 
-import type { ChatSnapshot, ChatStore } from "../store.js";
+import type { ChatSnapshot, ChatStore } from "./index.js";
 
 const DB_NAME = "wepi";
 const STORE = "chats";

@@ -7,7 +7,7 @@
  *   2. The chunk → AssistantMessageEvent translation (text + tool call).
  */
 import { describe, expect, it } from "vitest";
-import { createWebLLMProvider, type WebLLMEngine } from "../src/webllm/index.js";
+import { createWebLLMProvider, type WebLLMEngine } from "../src/engine/webllm.js";
 
 /** An engine that records requests and replays a scripted chunk stream. */
 function fakeEngine(chunks: unknown[]): { engine: WebLLMEngine; requests: any[] } {
@@ -98,5 +98,17 @@ describe("wepi/webllm provider", () => {
     expect(final.stopReason).toBe("toolUse");
     expect(final.usage.input).toBe(10);
     expect(final.usage.output).toBe(4);
+  });
+
+  it("dispose() unloads the engine exactly once (idempotent)", async () => {
+    let unloads = 0;
+    const { engine } = fakeEngine([]);
+    engine.unload = async () => {
+      unloads++;
+    };
+    const { dispose } = await createWebLLMProvider({ engine, model: "test" });
+    await dispose();
+    await dispose();
+    expect(unloads).toBe(1);
   });
 });

@@ -3,7 +3,7 @@ import { createBashTool, buildPushScript, buildPullScript, parsePullOutput } fro
 import { VirtualFS } from "../src/tools/fs.js";
 import { toBase64 } from "../src/base64.js";
 import { WepiError } from "../src/errors.js";
-import type { ExecResult, Sandbox } from "../src/sandbox.js";
+import type { ExecResult, Sandbox } from "../src/sandbox/index.js";
 
 const textOf = (r: { content: { type: string; text?: string }[] }) =>
   r.content.map((c) => c.text ?? "").join("");

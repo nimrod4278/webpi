@@ -15,7 +15,7 @@ The agent's workspace is mirrored into the VM around every shell command, so fil
 This is a pnpm monorepo with two packages:
 
 ```
-packages/sdk    → the `wepi` SDK: headless core + React bindings (`wepi/react`) + c2w sandbox (`wepi/c2w`)
+packages/sdk    → the `wepi` SDK: headless core + React hooks (`wepi/react`) + c2w sandbox (`wepi/c2w`)
 apps/client     → a React + Vite app; the canonical example of consuming the SDK
 ```
 
@@ -143,17 +143,7 @@ completed turn — never per token — so a network-backed store is cheap.
 
 ## Use — React (`wepi/react`)
 
-A drop-in component. It boots the c2w bash sandbox for you (see below), so pi can
-run shell commands out of the box:
-
-```tsx
-import { PiChat } from "wepi/react";
-import "wepi/react/PiChat.css";            // optional default styling
-
-<PiChat apiKey={key} files={{ "README.md": "# my project\n" }} persist="proj-1" />
-```
-
-Or compose your own UI with the hooks — same agent, your markup:
+Two hooks — the agent and the sandbox as React state, your markup on top:
 
 ```tsx
 import { usePiChat, useC2wSandbox } from "wepi/react";
@@ -185,7 +175,7 @@ lazy-pulls file chunks over HTTP Range requests — boot downloads only what the
 shell touches, not the whole ~45MB image; python/node bits stream in on first
 use and are then browser-cached. (The guest has no network — anything else the
 agent needs must be baked into the image; see
-`apps/client/scripts/sandbox.Dockerfile`.)
+`packages/sdk/scripts/sandbox.Dockerfile`.)
 
 Semantics worth knowing:
 
@@ -199,17 +189,18 @@ Semantics worth knowing:
   implementation (server-side runner, WebContainer, …) gets it for free.
 
 The SDK ships the code; the **host app** supplies the runtime pieces (they're
-deployment/CORS concerns, not shippable in an npm package):
+deployment/CORS concerns, and the wasm/image blobs are too big to live in an
+npm tarball):
 
-- the xterm-pty + `runcontainer.js` global `<script>`s in `index.html`,
 - the wasm/image assets (`out.wasm.gzip`, `imagemounter.wasm.gzip`, the
   `alpine/` OCI image, `worker.js`, `dist/`) served under one base URL —
-  point `assetsBaseUrl` at it (default: the page origin),
+  point `assetsBaseUrl` at it (default: the page origin). 
+  * **If using Vite (recommended)**: Add the `wepiAssetsPlugin` (from `wepi/vite`) to your `vite.config.ts`. It will automatically scan your `src/` directory for sandbox usage (e.g. `C2wSandbox` or `useC2wSandbox`) and download the assets into your `./public` folder at server/build start.
+  * **If using other bundlers**: Run **`wepi-fetch-assets ./public`** once to download a prebuilt bundle into that directory (see [The sandbox image](#the-sandbox-image)).
+- the xterm-pty + `runcontainer.js` global `<script>`s in `index.html`,
 - the cross-origin-isolation headers (see below).
 
-`apps/client` wires all of this up — copy it as a starting point. Importing
-`wepi/c2w` is side-effect free (the globals are looked up at boot), so it's
-safe in SSR builds.
+`apps/client` wires all of this up — copy it as a starting point. Importing `wepi/c2w` is side-effect free (the globals are looked up at boot), so it's safe in SSR builds.
 
 ## How it works
 
@@ -242,10 +233,30 @@ tools only) don't need any of this.
 
 ## The sandbox image
 
-The bash sandbox assets ship prebuilt in `apps/client/public`. To change what's
-inside the sandbox, edit `apps/client/scripts/sandbox.Dockerfile` and rerun
-`node apps/client/scripts/build-image.mjs` (requires Docker Desktop; the build
-runs riscv64 packages under QEMU, so it takes a few minutes).
+The bash sandbox assets — the emulator wasm, the image mounter, and the Alpine
+OCI rootfs — are **fetched on demand**, not committed.
+
+* **Vite apps**: Add `wepiAssetsPlugin` to `vite.config.ts` (see above). The plugin automatically downloads the assets when the server starts or builds if C2wSandbox is used.
+* **Non-Vite apps**: Run the CLI script:
+```bash
+wepi-fetch-assets ./public            # into your app's served dir
+```
+
+This pulls a pinned `wepi-sandbox-assets-<version>.tar.gz` from the SDK's
+GitHub release (`--tag`/`--repo`/`--url` override the source; `--force`
+refetches). The bundle's prebuilt `alpine/` is the default rootfs — no Docker
+needed.
+
+To **change what's inside** the sandbox, edit the recipe that ships with the
+SDK — `packages/sdk/scripts/sandbox.Dockerfile` — and rebuild just the rootfs:
+
+```
+wepi-build-image ./public/alpine      # requires Docker Desktop
+```
+
+(The build runs riscv64 packages under QEMU, so it takes a few minutes. The
+recipe lives next to `C2wSandbox` because its arch/eStargz/toolchain choices are
+dictated by that loader — see the header comment in `build-image.mjs`.)
 
 ## Networking & keys
 

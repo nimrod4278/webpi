@@ -49,6 +49,14 @@ export interface UsePiChatResult {
   abort: () => void;
   /** Read the agent's virtual workspace back out. */
   files: () => Record<string, string>;
+  /**
+   * Fraction (0..1) of the model's context window used by the last turn.
+   * Meaningful for local engines (their window is a hard limit); refreshed
+   * after each turn completes.
+   */
+  contextPct: number;
+  /** Clear the conversation (keeps workspace files) and empty the transcript. */
+  reset: () => void;
 }
 
 /**
@@ -61,6 +69,7 @@ export function usePiChat(options: UsePiChatOptions): UsePiChatResult {
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(undefined);
+  const [contextPct, setContextPct] = useState(0);
 
   const chatRef = useRef<Chat | undefined>(undefined);
   const busyRef = useRef(false);
@@ -91,6 +100,7 @@ export function usePiChat(options: UsePiChatOptions): UsePiChatResult {
         created = c;
         chatRef.current = c;
         setChat(c);
+        setContextPct(c.metrics.contextPct); // restored transcripts start non-zero
       } catch (err) {
         if (!disposed) setError(err);
       }
@@ -132,20 +142,39 @@ export function usePiChat(options: UsePiChatOptions): UsePiChatResult {
     const patch = (fn: (e: TranscriptEntry) => TranscriptEntry) =>
       setTranscript((t) => t.map((e) => (e.id === asstId ? fn(e) : e)));
 
+    // Batch streamed deltas into ~50ms flushes: a long reply arrives as
+    // thousands of deltas, and a setState per delta re-renders the whole
+    // transcript each time.
+    let pending = "";
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => {
+      flushTimer = undefined;
+      if (!pending) return;
+      const chunk = pending;
+      pending = "";
+      patch((e) => ({ ...e, text: e.text + chunk }));
+    };
+
     try {
       const turn = c.send(trimmed, {
         onTool: (ev: ToolEvent) => patch((e) => ({ ...e, tools: [...e.tools, ev] })),
       });
       for await (const delta of turn) {
-        patch((e) => ({ ...e, text: e.text + delta }));
+        pending += delta;
+        flushTimer ??= setTimeout(flush, 50);
       }
+      if (flushTimer) clearTimeout(flushTimer);
+      flush();
       patch((e) => ({ ...e, streaming: false, text: turn.aborted ? e.text + "\n[stopped]" : e.text }));
     } catch (err) {
+      if (flushTimer) clearTimeout(flushTimer);
+      flush();
       setError(err);
       patch((e) => ({ ...e, streaming: false, text: `${e.text}\n[error] ${String(err)}` }));
     } finally {
       busyRef.current = false;
       setBusy(false);
+      setContextPct(chatRef.current?.metrics.contextPct ?? 0);
     }
     return true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -153,6 +182,11 @@ export function usePiChat(options: UsePiChatOptions): UsePiChatResult {
 
   const abort = useCallback(() => chatRef.current?.abort(), []);
   const files = useCallback(() => chatRef.current?.files() ?? {}, []);
+  const reset = useCallback(() => {
+    chatRef.current?.reset();
+    setTranscript([]);
+    setContextPct(0);
+  }, []);
 
-  return { chat, ready: !!chat, busy, error, transcript, send, abort, files };
+  return { chat, ready: !!chat, busy, error, transcript, send, abort, files, contextPct, reset };
 }

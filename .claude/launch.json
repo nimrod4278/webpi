@@ -4,7 +4,8 @@
     {
       "name": "wepi-client",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "wepi-client", "dev", "--port", "5175", "--strictPort"],
+      "runtimeArgs": ["--filter", "wepi-client", "dev"],
+      "autoPort": true,
       "port": 5175
     },
     {
@@ -12,16 +13,6 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "wepi-client", "dev", "--port", "5178", "--strictPort"],
       "port": 5178
-    },
-    {
-      "name": "sandbox-lab",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "build/serve-coi.mjs",
-        "/private/tmp/claude-502/-Users-nimrodfeldman-wepi2/05e8c729-f742-41f0-aa3c-2e5003198b72/scratchpad/htdocs",
-        "8090"
-      ],
-      "port": 8090
     }
   ]
 }
