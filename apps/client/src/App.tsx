@@ -12,9 +12,9 @@
  */
 
 import { useState } from "react";
-import { Dropzone } from "./Dropzone";
-import { ModelSetup, type ModelChoice } from "./ModelSetup";
-import { Workspace } from "./Workspace";
+import { Home } from "./screens/Home";
+import { ModelSetup, type ModelChoice } from "./screens/ModelSetup";
+import { Workspace } from "./screens/Workspace";
 import { rememberDataset, type Dataset } from "./lib";
 import "./app.css";
 
@@ -41,7 +41,7 @@ export function App() {
   };
 
   if (!dataset) {
-    return <Dropzone onPick={pick} />;
+    return <Home onPick={pick} />;
   }
   if (!choice) {
     return (

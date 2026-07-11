@@ -1,5 +1,5 @@
 /**
- * Dropzone — the home screen. Drag-drop or pick a CSV, try the bundled sample,
+ * Home — the landing screen. Drag-drop or pick a CSV, try the bundled sample,
  * or reopen a recent dataset. Emits the chosen {@link Dataset} to the parent,
  * which routes to model setup (first run) then the workspace.
  *
@@ -9,9 +9,9 @@
  */
 
 import { useRef, useState } from "react";
-import { datasetFromFile, loadComplexSampleDataset, loadRecents, SAMPLE_DATASET, type Dataset } from "./lib";
+import { datasetFromFile, loadComplexSampleDataset, loadRecents, SAMPLE_DATASET, type Dataset } from "../lib";
 
-export function Dropzone({ onPick }: { onPick: (d: Dataset) => void }) {
+export function Home({ onPick }: { onPick: (d: Dataset) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | undefined>();

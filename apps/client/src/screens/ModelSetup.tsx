@@ -24,7 +24,7 @@
 
 import { useEffect, useState } from "react";
 import type { Provider } from "wepi";
-import { detectGpuCaps, fitsGpu, type GpuCaps } from "./gpuCaps";
+import { detectGpuCaps, fitsGpu, type GpuCaps } from "../gpuCaps";
 
 /** What the rest of the app consumes — local (Provider object) or cloud (id + key). */
 export interface ModelChoice {
@@ -350,9 +350,13 @@ async function loadWllama(
       // requirement (V-quant would need flash_attn, which the WASM/WebGPU
       // backends don't reliably support).
       cache_type_k: "q8_0",
-      // Prefill in bigger slices than the 512 default — prompt processing is
-      // the dominant per-turn cost, and context budgeting caps prompt size.
-      n_batch: 2048,
+      // n_batch is the max tokens llama.cpp will accept in ONE prefill batch;
+      // a prompt above it throws "Invalid input batch". Match it to n_ctx so any
+      // prompt the SDK's context budgeting lets through (up to n_ctx - maxTokens)
+      // prefills in one shot — the 512 default (and even 2048) fails once the
+      // system prompt + tool schemas + history cross that line. n_ubatch still
+      // chunks the physical compute at 512, so this costs almost no memory.
+      n_batch: sel.ctx,
       progressCallback: ({ loaded, total }: { loaded: number; total: number }) =>
         setProgress({
           pct: total ? Math.round((loaded / total) * 100) : 0,

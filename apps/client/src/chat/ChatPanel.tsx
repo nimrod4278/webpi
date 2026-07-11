@@ -1,30 +1,47 @@
 /**
  * ChatPanel — the conversation half of the workspace. A thin, presentational
- * wrapper over the `usePiChat` transcript: it renders user/assistant turns,
- * collapses tool activity into a compact "running Python…" style line, and
- * owns the composer. All chat state lives in the parent's `usePiChat` result,
- * passed in as `pi`.
+ * wrapper over the `usePiChat` transcript: it renders user/assistant turns and
+ * turns each tool call into a friendly activity chip (e.g. "Added chart ·
+ * Revenue by region"), so the user can watch the agent build the dashboard. All
+ * chat state lives in the parent's `usePiChat` result, passed in as `pi`.
  */
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { UsePiChatResult } from "wepi/react";
+import type { ToolEvent } from "wepi";
 
-/** Friendlier labels for the agent's tools than the raw tool name. */
-function toolLabel(name: string): string {
-  switch (name) {
+/** Turn a tool-start event into an icon + human phrase, with a short detail. */
+function describeTool(toolName: string, args: unknown): { icon: string; text: string } {
+  const a = (args ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  switch (toolName) {
+    case "query_data":
+      return { icon: "🔎", text: "Analyzing" + (str(a.groupBy) ? ` by ${a.groupBy}` : str(a.column) ? ` ${a.column}` : " data") };
+    case "add_widget": {
+      const detail = str(a.title) ?? str(a.label) ?? str(a.kind) ?? "";
+      return { icon: "➕", text: `Added ${str(a.kind) ?? "widget"}${detail && detail !== str(a.kind) ? ` · ${detail}` : ""}` };
+    }
+    case "update_widget":
+      return { icon: "✏️", text: "Updated widget" };
+    case "remove_widget":
+      return { icon: "🗑️", text: "Removed widget" };
+    case "list_widgets":
+      return { icon: "📋", text: "Reviewing dashboard" };
+    case "set_dashboard_title":
+      return { icon: "🏷️", text: `Titled “${str(a.title) ?? "dashboard"}”` };
     case "bash":
-      return "running code";
+      return { icon: "⚙️", text: "Running code" };
     case "write":
-      return "writing dashboard";
+      return { icon: "📝", text: "Writing file" };
     case "edit":
-      return "editing dashboard";
+      return { icon: "✏️", text: "Editing file" };
     case "read":
-      return "reading data";
-    case "list":
-    case "search":
-      return "inspecting data";
+      return { icon: "📖", text: "Reading data" };
+    case "ls":
+    case "grep":
+      return { icon: "🔍", text: "Inspecting files" };
     default:
-      return name;
+      return { icon: "•", text: toolName };
   }
 }
 
@@ -60,10 +77,11 @@ export function ChatPanel({ pi, disabled }: { pi: UsePiChatResult; disabled?: bo
             <div className="msg-role">{entry.role === "user" ? "you" : "insight"}</div>
             {entry.tools.length > 0 && (
               <div className="tools">
-                {entry.tools.map((ev, i) =>
+                {entry.tools.map((ev: ToolEvent, i) =>
                   ev.type === "start" ? (
-                    <div key={i} className="tool-line">
-                      <span className="spinner-dot" /> {toolLabel(ev.toolName)}…
+                    <div key={i} className="tool-chip">
+                      <span className="tool-chip-icon">{describeTool(ev.toolName, ev.args).icon}</span>
+                      {describeTool(ev.toolName, ev.args).text}
                     </div>
                   ) : null,
                 )}
@@ -95,7 +113,7 @@ export function ChatPanel({ pi, disabled }: { pi: UsePiChatResult; disabled?: bo
       <div className="composer">
         <input
           value={draft}
-          placeholder={disabled ? "Starting…" : "Ask for a change — e.g. “add a filter by region”"}
+          placeholder={disabled ? "Starting…" : "Ask for a change — e.g. “add a pie of sales by region”"}
           disabled={disabled || !pi.ready}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
