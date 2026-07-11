@@ -194,15 +194,13 @@ npm tarball):
 
 - the wasm/image assets (`out.wasm.gzip`, `imagemounter.wasm.gzip`, the
   `alpine/` OCI image, `worker.js`, `dist/`) served under one base URL —
-  point `assetsBaseUrl` at it (default: the page origin). Run
-  **`wepi-fetch-assets ./public`** once to download a prebuilt bundle into that
-  directory (see [The sandbox image](#the-sandbox-image)),
+  point `assetsBaseUrl` at it (default: the page origin). 
+  * **If using Vite (recommended)**: Add the `wepiAssetsPlugin` (from `wepi/vite`) to your `vite.config.ts`. It will automatically scan your `src/` directory for sandbox usage (e.g. `C2wSandbox` or `useC2wSandbox`) and download the assets into your `./public` folder at server/build start.
+  * **If using other bundlers**: Run **`wepi-fetch-assets ./public`** once to download a prebuilt bundle into that directory (see [The sandbox image](#the-sandbox-image)).
 - the xterm-pty + `runcontainer.js` global `<script>`s in `index.html`,
 - the cross-origin-isolation headers (see below).
 
-`apps/client` wires all of this up — copy it as a starting point (its `predev`
-runs `wepi-fetch-assets` automatically). Importing `wepi/c2w` is side-effect
-free (the globals are looked up at boot), so it's safe in SSR builds.
+`apps/client` wires all of this up — copy it as a starting point. Importing `wepi/c2w` is side-effect free (the globals are looked up at boot), so it's safe in SSR builds.
 
 ## How it works
 
@@ -236,11 +234,12 @@ tools only) don't need any of this.
 ## The sandbox image
 
 The bash sandbox assets — the emulator wasm, the image mounter, and the Alpine
-OCI rootfs — are **fetched on demand**, not committed. Populate them with:
+OCI rootfs — are **fetched on demand**, not committed.
 
-```
+* **Vite apps**: Add `wepiAssetsPlugin` to `vite.config.ts` (see above). The plugin automatically downloads the assets when the server starts or builds if C2wSandbox is used.
+* **Non-Vite apps**: Run the CLI script:
+```bash
 wepi-fetch-assets ./public            # into your app's served dir
-# or, in this repo:  pnpm --filter wepi-client fetch-assets
 ```
 
 This pulls a pinned `wepi-sandbox-assets-<version>.tar.gz` from the SDK's

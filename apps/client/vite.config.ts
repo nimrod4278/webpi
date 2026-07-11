@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { wepiAssetsPlugin } from "wepi/vite";
 
 // The agent runs native, but the bash sandbox (container2wasm + xterm-pty
 // TtyServer) uses SharedArrayBuffer, which needs cross-origin isolation.
@@ -14,7 +15,7 @@ const coiHeaders = {
 const port = process.env.PORT ? Number(process.env.PORT) : undefined;
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), wepiAssetsPlugin()],
   server: { port, headers: coiHeaders },
   preview: { headers: coiHeaders },
   define: {
