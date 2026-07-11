@@ -287,6 +287,18 @@ pnpm -r typecheck
 pnpm --filter wepi test   # offline core: Turn semantics, fs sync, busy guard, persistence
 ```
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup and
+the checks CI runs, and please follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+For security issues, see [SECURITY.md](SECURITY.md) rather than filing a public
+issue.
+
 ## License
 
-MIT
+Licensed under the [MIT License](LICENSE).
+
+wepi builds on and bundles third-party software (pi/pi-agent-core,
+container2wasm, Alpine, and optional in-browser inference engines); see
+[NOTICE](NOTICE) for attribution. Those components remain under their own
+licenses.

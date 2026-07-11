@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "license": "MIT",
+  "author": "Nimrod Feldman <nimrod.feldman@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nimrod4278/webpi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nimrod4278/webpi/issues"
+  },
+  "homepage": "https://github.com/nimrod4278/webpi#readme",
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
