@@ -12,18 +12,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { C2wSandbox, type C2wSandboxOptions } from "../sandbox/c2w.js";
+import type { SandboxStatus, UseSandboxResult } from "./sandbox-lifecycle.js";
 
-export type C2wStatus = "idle" | "booting" | "warming" | "ready" | "error";
-
-export interface UseC2wSandboxResult {
-  /** The sandbox instance (available as soon as booting starts). */
-  sandbox: C2wSandbox | undefined;
-  status: C2wStatus;
-  /** True once boot + warm-up finished. */
-  ready: boolean;
-  /** Latest boot/lifecycle log line, for a status display. */
-  log: string;
-}
+/** @deprecated use `SandboxStatus` (shared across sandbox hooks). */
+export type C2wStatus = SandboxStatus;
+export type UseC2wSandboxResult = UseSandboxResult<C2wSandbox>;
 
 export function useC2wSandbox(
   opts: C2wSandboxOptions & { enabled?: boolean } = {},

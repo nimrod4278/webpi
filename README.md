@@ -202,6 +202,24 @@ npm tarball):
 
 `apps/client` wires all of this up — copy it as a starting point. Importing `wepi/c2w` is side-effect free (the globals are looked up at boot), so it's safe in SSR builds.
 
+### Lighter alternative: lifo.sh (`wepi/lifo`)
+
+Don't need a real Alpine VM? [lifo.sh](https://lifo.sh) (`@lifo-sh/core`, MIT) is a
+Linux-*like* OS reimplemented in pure TypeScript — virtual filesystem, bash-like
+shell, and 60+ Unix commands, all client-side. `LifoSandbox` is a drop-in
+`Sandbox` with none of c2w's hosting burden: **no COOP/COEP headers, no global
+`<script>`s, no image download** — just an optional peer dependency.
+
+```ts
+import { LifoSandbox } from "wepi/lifo";      // npm i @lifo-sh/core
+const chat = await createChat({ apiKey, sandbox: new LifoSandbox() });
+```
+
+In React it's the same shape as `useC2wSandbox`, so it's a one-line swap:
+`const lifo = useLifoSandbox();` → `usePiChat({ apiKey, sandbox: lifo.sandbox, enabled: !!lifo.sandbox })`.
+The trade-off: lifo runs its own reimplemented commands, not a real userland, so
+some commands differ or are absent. See [the sandbox guide](docs/guides/sandbox.md).
+
 ## How it works
 
 ```
