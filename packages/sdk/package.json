@@ -39,6 +39,10 @@
       "types": "./dist/sandbox/c2w.d.ts",
       "import": "./dist/sandbox/c2w.js"
     },
+    "./lifo": {
+      "types": "./dist/sandbox/lifo.d.ts",
+      "import": "./dist/sandbox/lifo.js"
+    },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
@@ -81,6 +85,7 @@
     "@earendil-works/pi-ai": "0.80.2"
   },
   "peerDependencies": {
+    "@lifo-sh/core": ">=0.6.0",
     "@litert-lm/core": ">=0.12.0",
     "@mlc-ai/web-llm": ">=0.2.79",
     "@wllama/wllama": ">=3.1.0",
@@ -89,6 +94,9 @@
     "vite": ">=5"
   },
   "peerDependenciesMeta": {
+    "@lifo-sh/core": {
+      "optional": true
+    },
     "@litert-lm/core": {
       "optional": true
     },
@@ -109,6 +117,7 @@
     }
   },
   "devDependencies": {
+    "@lifo-sh/core": "^0.6.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "react": "^18.3.0",

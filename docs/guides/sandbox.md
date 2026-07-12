@@ -117,6 +117,50 @@ const pi = usePiChat({
 carries the latest lifecycle line for a status display. See
 [React bindings](react.md).
 
+## Alternative backend: lifo.sh (`wepi/lifo`)
+
+`C2wSandbox` runs a **real** Alpine userland, but that realism costs you: a
+cross-origin-isolated page, global `<script>`s, and a ~45 MB image to serve.
+When you don't need a genuine Linux VM, [lifo.sh](https://lifo.sh) is a much
+lighter alternative — a Linux-*like* OS reimplemented in pure TypeScript
+(`@lifo-sh/core`, MIT) that runs entirely client-side: a virtual filesystem, a
+bash-like shell, and 60+ Unix commands (`ls`, `grep`, `awk`, `sed`, `curl`,
+`node`, `npm`, …).
+
+```bash
+npm i @lifo-sh/core          # optional peer dependency
+```
+
+```ts
+import { createChat } from "wepi";
+import { LifoSandbox } from "wepi/lifo";
+
+const sandbox = new LifoSandbox({ onLog: console.debug });
+const chat = await createChat({ apiKey, sandbox });
+```
+
+In React it exposes the **identical** shape as `useC2wSandbox`, so switching
+backends is a one-line swap:
+
+```tsx
+import { useLifoSandbox, usePiChat } from "wepi/react";
+
+const lifo = useLifoSandbox();             // boots ~instantly, no image
+const pi = usePiChat({ apiKey, sandbox: lifo.sandbox, enabled: !!lifo.sandbox });
+```
+
+**Why pick it:** no COOP/COEP headers, no global scripts, no image download —
+just the npm dependency. It boots ~instantly (`status` goes `idle → booting →
+ready`; there's no `warming` step) and works in Node too, so it runs under
+vitest without WebGPU/`SharedArrayBuffer`.
+
+**Trade-off — not a real Alpine.** lifo runs its *own* reimplemented commands,
+not a real userland, so behavior and available commands can differ from
+`C2wSandbox`. It also persists to IndexedDB (opt in with `persist: true`) rather
+than lazy-pulling an OCI image. Everything that sits on top of `exec` —
+workspace sync, the `bash` tool, the agent — is unchanged, because the two
+backends implement the same one-method `Sandbox` interface.
+
 ## Writing your own `Sandbox`
 
 The interface is one method:

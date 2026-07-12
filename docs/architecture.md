@@ -66,15 +66,20 @@ interface Sandbox {
 interface ExecResult { stdout: string; stderr: string; code: number; }
 ```
 
-Two implementations ship:
+Three implementations ship:
 
 - **`NullSandbox`** (default): `bash` returns exit code 127 with a message that
   the shell is unavailable. File tools still work. This keeps sandbox-less chats
   (file tools only) fully functional with no hosting requirements.
 - **`C2wSandbox`** (`wepi/c2w`): a container2wasm Alpine VM in a Web Worker,
   driving `/bin/sh` over a raw PTY with a base64, sentinel-fenced framing
-  protocol so terminal echo cannot fake a command boundary. See
+  protocol so terminal echo cannot fake a command boundary. A **real** Alpine
+  userland; needs COOP/COEP + served assets. See
   [The bash sandbox](guides/sandbox.md).
+- **`LifoSandbox`** (`wepi/lifo`): [lifo.sh](https://lifo.sh) (`@lifo-sh/core`) —
+  a Linux-*like* OS reimplemented in pure TypeScript, all client-side. Lighter to
+  host (no COOP/COEP, no image download) but runs its own reimplemented commands
+  rather than a real userland. A thin adapter over lifo's `commands.run`.
 
 Because everything the tool needs is `exec`, you can drop in any backend — a
 server-side runner, a WebContainer, a remote VM — and inherit workspace sync for
@@ -149,7 +154,7 @@ as keyless, so local models need no credentials. See
 
 | Seam | Interface | Default | Swap for |
 | --- | --- | --- | --- |
-| Execution | `Sandbox.exec` | `NullSandbox` | `C2wSandbox`, server runner, WebContainer |
+| Execution | `Sandbox.exec` | `NullSandbox` | `C2wSandbox`, `LifoSandbox`, server runner, WebContainer |
 | Persistence | `ChatStore` | `IndexedDBStore` | your API, Postgres, Supabase |
 | Model | pi-ai `Provider` | Anthropic | any cloud id, custom provider, local engine |
 
