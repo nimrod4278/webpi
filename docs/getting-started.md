@@ -15,15 +15,15 @@ workspace back, and running shell commands.
 ## Install
 
 ```bash
-pnpm add wepi
-# add react + react-dom too if you will use wepi/react
+pnpm add @wepi/sdk
+# add react + react-dom too if you will use @wepi/sdk/react
 pnpm add react react-dom
 ```
 
 ## Your first chat
 
 ```ts
-import { createChat } from "wepi";
+import { createChat } from "@wepi/sdk";
 
 const chat = await createChat({
   apiKey: import.meta.env.VITE_ANTHROPIC_KEY, // POC: browser-direct
@@ -74,11 +74,11 @@ await chat.send("Run the tests", {
 
 By default the `bash` tool reports that it is unavailable (a `NullSandbox` is
 wired). To let pi run shell commands, attach a sandbox. In the browser, that is
-`C2wSandbox` from `wepi/c2w`:
+`C2wSandbox` from `@wepi/sdk/c2w`:
 
 ```ts
-import { createChat } from "wepi";
-import { C2wSandbox } from "wepi/c2w";
+import { createChat } from "@wepi/sdk";
+import { C2wSandbox } from "@wepi/sdk/c2w";
 
 const sandbox = new C2wSandbox({ onLog: console.debug });
 const chat = await createChat({ apiKey, sandbox });
@@ -123,7 +123,7 @@ chat.dispose();  // abort + flush a final snapshot
 For a single question with no follow-ups:
 
 ```ts
-import { ask } from "wepi";
+import { ask } from "@wepi/sdk";
 
 const answer = await ask("Summarize a.ts", {
   apiKey,
@@ -138,14 +138,20 @@ const answer = await ask("Summarize a.ts", {
 If you are building a UI, the React layer is usually the fastest path:
 
 ```tsx
-import { PiChat } from "wepi/react";
-import "wepi/react/PiChat.css";
+import { usePiChat } from "@wepi/sdk/react";
 
-<PiChat apiKey={key} files={{ "README.md": "# my project\n" }} persist="proj-1" />
+function Chat({ apiKey }: { apiKey: string }) {
+  const pi = usePiChat({ apiKey, files: { "README.md": "# my project\n" }, persist: "proj-1" });
+  return (
+    <button disabled={!pi.ready || pi.busy} onClick={() => pi.send("Add a test")}>
+      Send
+    </button>
+  );
+}
 ```
 
-See **[React bindings](guides/react.md)** for the drop-in component and the
-lower-level hooks.
+The React layer is hooks only — bring your own markup. See **[React
+bindings](guides/react.md)** for the full hook surface.
 
 ## Next steps
 

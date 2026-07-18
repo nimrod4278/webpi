@@ -1,9 +1,9 @@
 /**
- * `wepi/litert` — run **Gemma 4** *locally in the browser* via Google's
+ * `@wepi/sdk/litert` — run **Gemma 4** *locally in the browser* via Google's
  * LiteRT-LM Web API (`@litert-lm/core`), with no API key and no network calls
  * to any provider.
  *
- *   import { createLiteRTProvider } from "wepi/litert";
+ *   import { createLiteRTProvider } from "@wepi/sdk/litert";
  *   import { Engine } from "@litert-lm/core"; // demo builds the engine (Vite)
  *   const engine = await Engine.create({
  *     model: "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it-web.litertlm",
@@ -12,7 +12,7 @@
  *   const { provider, modelId } = await createLiteRTProvider({ engine });
  *   const chat = await createChat({ provider, model: modelId }); // keyless
  *
- * Why this exists next to `wepi/wllama` and `wepi/webllm`: those run llama.cpp /
+ * Why this exists next to `@wepi/sdk/wllama` and `@wepi/sdk/webllm`: those run llama.cpp /
  * MLC and are **text-first**. LiteRT-LM is Google's on-device runtime (the
  * successor to the MediaPipe LLM Inference API) and is the path Google ships
  * Gemma 4 on. Its `Conversation` has **built-in function calling**

@@ -10,6 +10,6 @@
 
 - [ ] `pnpm -r build` passes
 - [ ] `pnpm -r typecheck` passes
-- [ ] `pnpm --filter wepi test` passes
+- [ ] `pnpm --filter @wepi/sdk test` passes
 - [ ] Docs / README updated if behavior changed
 - [ ] Commit messages follow Conventional Commits

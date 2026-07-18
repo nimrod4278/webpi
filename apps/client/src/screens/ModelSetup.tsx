@@ -23,7 +23,7 @@
  */
 
 import { useEffect, useState } from "react";
-import type { Provider } from "wepi";
+import type { Provider } from "@wepi/sdk";
 import { detectGpuCaps, fitsGpu, type GpuCaps } from "../gpuCaps";
 
 /** What the rest of the app consumes — local (Provider object) or cloud (id + key). */
@@ -338,7 +338,7 @@ async function loadWllama(
   const [{ Wllama }, { default: wasmUrl }, { createWllamaProvider }] = await Promise.all([
     import("@wllama/wllama"),
     import("@wllama/wllama/esm/wasm/wllama.wasm?url"),
-    import("wepi/wllama"),
+    import("@wepi/sdk/wllama"),
   ]);
   // wllama ships one unified WASM; `default` is the base it resolves it from.
   const wllama = new Wllama({ default: wasmUrl });
@@ -394,7 +394,7 @@ async function loadWebLLM(
 ): Promise<Loaded> {
   const [{ CreateMLCEngine }, { createWebLLMProvider }] = await Promise.all([
     import("@mlc-ai/web-llm"),
-    import("wepi/webllm"),
+    import("@wepi/sdk/webllm"),
   ]);
   const engine = await CreateMLCEngine(
     sel.id,

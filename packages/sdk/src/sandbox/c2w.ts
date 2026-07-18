@@ -37,7 +37,7 @@ function getGlobals(): C2wGlobals {
   const missing = ["RunContainer", "openpty", "TtyServer", "Termios"].filter((k) => !g[k]);
   if (missing.length > 0) {
     throw new WepiError(
-      `wepi/c2w: missing globals: ${missing.join(", ")}. Load the xterm-pty and ` +
+      `@wepi/sdk/c2w: missing globals: ${missing.join(", ")}. Load the xterm-pty and ` +
         `runcontainer <script> tags before booting the sandbox (see README).`,
       "sandbox",
     );

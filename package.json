@@ -16,7 +16,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter wepi test",
+    "test": "pnpm --filter @wepi/sdk test",
     "dev": "pnpm --filter wepi-client dev"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 /**
- * The wepi/litert (Gemma 4 via LiteRT-LM) provider, exercised against a FAKE
+ * The @wepi/sdk/litert (Gemma 4 via LiteRT-LM) provider, exercised against a FAKE
  * engine (no WebGPU, no .litertlm download). Proves offline:
  *   1. Turn wiring: system + prior turns land in the conversation `preface`, the
  *      final turn is the `sendMessageStreaming` input `Message`, and pi-ai tools
@@ -45,7 +45,7 @@ const TOOLS = [
 ] as any;
 const userMessage = { role: "user", content: "run hello world", timestamp: 0 } as any;
 
-describe("wepi/litert provider", () => {
+describe("@wepi/sdk/litert provider", () => {
   it("puts system + prior turns in the preface, sends the last turn, forwards tools", async () => {
     const { engine, calls } = fakeEngine([
       { content: [{ type: "text", text: "ok" }] },

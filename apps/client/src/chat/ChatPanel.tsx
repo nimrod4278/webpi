@@ -7,8 +7,8 @@
  */
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import type { UsePiChatResult } from "wepi/react";
-import type { ToolEvent } from "wepi";
+import type { UsePiChatResult } from "@wepi/sdk/react";
+import type { ToolEvent } from "@wepi/sdk";
 
 /** Turn a tool-start event into an icon + human phrase, with a short detail. */
 function describeTool(toolName: string, args: unknown): { icon: string; text: string } {

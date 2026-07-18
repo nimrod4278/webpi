@@ -2,7 +2,7 @@
  * image in /public/alpine. Results land in #log and on window.__sandboxTest so
  * the page can be driven headlessly.
  * ?image=/alpine-amd64/&emulator=/out-amd64.wasm.gzip to test an alternate stack. */
-import { C2wSandbox } from "wepi/c2w";
+import { C2wSandbox } from "@wepi/sdk/c2w";
 
 const logEl = document.getElementById("log")!;
 const state = { phase: "booting", bootMs: 0, results: [] as unknown[], tail: "" };

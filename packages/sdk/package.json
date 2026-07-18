@@ -1,9 +1,16 @@
 {
-  "name": "wepi",
-  "version": "0.0.1",
+  "name": "@wepi/sdk",
+  "version": "0.1.0",
   "description": "Minimal POC SDK for chatting with the pi coding agent entirely in the browser, via container2wasm. Ships headless core + React hooks.",
   "type": "module",
   "license": "MIT",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "Nimrod Feldman <nimrod.feldman@gmail.com>",
   "homepage": "https://github.com/nimrod4278/webpi#readme",
   "repository": {
@@ -71,10 +78,12 @@
   "files": [
     "dist",
     "src",
-    "scripts"
+    "scripts",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

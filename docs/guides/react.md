@@ -1,35 +1,22 @@
-# React bindings (`wepi/react`)
+# React bindings (`@wepi/sdk/react`)
 
-`wepi/react` gives you a drop-in chat component and the hooks it's built from.
-`react` and `react-dom` are **peer dependencies** (>=18).
+`@wepi/sdk/react` gives you hooks for driving the agent from React — bring your
+own UI. `react` and `react-dom` are **peer dependencies** (>=18).
 
 ```bash
-pnpm add wepi react react-dom
+pnpm add @wepi/sdk react react-dom
 ```
 
-## `<PiChat>` — drop-in component
+This module is **hooks only** — it ships no components and no stylesheet. You
+bring the markup; the hooks own the agent lifecycle.
 
-The fastest path. It boots the c2w bash sandbox for you, so pi can run shell
-commands out of the box:
-
-```tsx
-import { PiChat } from "wepi/react";
-import "wepi/react/PiChat.css"; // optional default styling
-
-<PiChat
-  apiKey={key}
-  files={{ "README.md": "# my project\n" }}
-  persist="proj-1"
-/>
-```
-
-`PiChatProps` extends the same option surface as `createChat` (apiKey, baseUrl,
+`usePiChat` takes the same option surface as `createChat` (apiKey, baseUrl,
 getApiKey, model, provider, systemPrompt, files, persist, …), so everything in
 [Models](models.md), [Persistence](persistence.md), and
 [Networking & keys](networking-and-keys.md) applies here too.
 
-> Because `<PiChat>` boots the sandbox, your page must be cross-origin isolated
-> and serve the sandbox runtime assets. See [The bash sandbox](sandbox.md).
+> If you use a sandbox hook, your page must be cross-origin isolated and serve
+> the sandbox runtime assets. See [The bash sandbox](sandbox.md).
 
 ## Compose your own UI with hooks
 
@@ -37,7 +24,7 @@ Same agent, your markup. Two hooks: one for the sandbox lifecycle, one for the
 chat.
 
 ```tsx
-import { usePiChat, useC2wSandbox } from "wepi/react";
+import { usePiChat, useC2wSandbox } from "@wepi/sdk/react";
 
 function MyChat({ apiKey }: { apiKey: string }) {
   const c2w = useC2wSandbox();               // boots + warms the bash sandbox
@@ -132,4 +119,4 @@ cross-origin-isolation requirement.
 
 - [The bash sandbox](sandbox.md) — hosting requirements the component needs.
 - [Persistence](persistence.md) — carrying state across re-creations.
-- [API reference](../api-reference.md) — full `wepi/react` type list.
+- [API reference](../api-reference.md) — full `@wepi/sdk/react` type list.

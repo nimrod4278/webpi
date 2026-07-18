@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { wepiAssetsPlugin } from "wepi/vite";
+import { wepiAssetsPlugin } from "@wepi/sdk/vite";
 
 // The agent runs native, but the bash sandbox (container2wasm + xterm-pty
 // TtyServer) uses SharedArrayBuffer, which needs cross-origin isolation.

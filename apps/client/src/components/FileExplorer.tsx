@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Chat } from "wepi";
+import type { Chat } from "@wepi/sdk";
 
 // ── tree model ──────────────────────────────────────────────────────────────
 

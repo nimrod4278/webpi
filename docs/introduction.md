@@ -21,7 +21,7 @@ Web Worker.
   both an async iterable of text deltas and a promise for the full reply.
 - **Optional persistence.** Snapshot the conversation and workspace to IndexedDB
   (built in) or to any backend you implement.
-- **A React layer.** A drop-in `<PiChat>` component, or hooks to build your own
+- **A React layer.** Hooks to build your own
   UI over the same agent.
 
 ## The mental model
@@ -61,11 +61,13 @@ wepi is published as a single package with several subpath exports:
 
 | Import | Purpose |
 | --- | --- |
-| `wepi` | Headless core: `createChat`, `Chat`, `ask`, models, errors, stores. |
-| `wepi/react` | React component and hooks. |
-| `wepi/c2w` | The container2wasm bash sandbox. |
-| `wepi/wllama` | Local models via llama.cpp/WASM (any GGUF). |
-| `wepi/webllm` | Local models via WebLLM (MLC-precompiled). |
-| `wepi/litert` | Local Gemma 4 via Google's LiteRT-LM. |
+| `@wepi/sdk` | Headless core: `createChat`, `Chat`, `ask`, models, errors, stores. |
+| `@wepi/sdk/react` | React hooks (no components). |
+| `@wepi/sdk/c2w` | The container2wasm bash sandbox. |
+| `@wepi/sdk/lifo` | The lifo.sh bash sandbox (lighter alternative). |
+| `@wepi/sdk/wllama` | Local models via llama.cpp/WASM (any GGUF). |
+| `@wepi/sdk/webllm` | Local models via WebLLM (MLC-precompiled). |
+| `@wepi/sdk/litert` | Local Gemma 4 via Google's LiteRT-LM. |
+| `@wepi/sdk/vite` | Vite plugin that fetches the sandbox assets at build time. |
 
 Continue with **[Getting started](getting-started.md)**.

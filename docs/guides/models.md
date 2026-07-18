@@ -58,7 +58,7 @@ If you already have a pi-ai `Model` object (custom pricing, context window, or
 endpoint), pass it as `model` to bypass the catalog lookup entirely:
 
 ```ts
-import type { Model, Api } from "wepi";
+import type { Model, Api } from "@wepi/sdk";
 
 const model: Model<Api> = { /* ... */ };
 await createChat({ provider: "openai", model, apiKey });

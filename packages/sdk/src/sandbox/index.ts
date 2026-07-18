@@ -1,7 +1,7 @@
 /**
  * Sandbox: the pluggable backend for the agent's `bash`/run-code tool.
  *
- * `C2wSandbox` (wepi/c2w) implements it with a container2wasm Alpine VM; any
+ * `C2wSandbox` (@wepi/sdk/c2w) implements it with a container2wasm Alpine VM; any
  * other backend (server-side runner, WebContainer, …) just needs `exec`. The
  * bash tool layers workspace sync on top of `exec` alone, so implementations
  * stay this small. `NullSandbox` is the default when no sandbox is wired:

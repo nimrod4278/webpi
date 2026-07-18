@@ -10,9 +10,9 @@ own subpath module:
 
 | Subpath | Engine | Best for |
 | --- | --- | --- |
-| `wepi/wllama` | llama.cpp → WASM (WebGPU since v3.1) | **Any GGUF on Hugging Face, day-one.** |
-| `wepi/webllm` | WebLLM / MLC | Mature runtime, MLC-precompiled models only. |
-| `wepi/litert` | Google LiteRT-LM | **Gemma 4**, with built-in function calling. |
+| `@wepi/sdk/wllama` | llama.cpp → WASM (WebGPU since v3.1) | **Any GGUF on Hugging Face, day-one.** |
+| `@wepi/sdk/webllm` | WebLLM / MLC | Mature runtime, MLC-precompiled models only. |
+| `@wepi/sdk/litert` | Google LiteRT-LM | **Gemma 4**, with built-in function calling. |
 
 ## Requirements common to all three
 
@@ -30,13 +30,13 @@ const { provider, modelId } = await createWllamaProvider({ /* ... */ });
 const chat = await createChat({ provider, model: modelId }); // keyless
 ```
 
-## `wepi/wllama` — any GGUF
+## `@wepi/sdk/wllama` — any GGUF
 
 llama.cpp gets new architectures first and every GGUF on Hugging Face works with
 zero conversion, so the newest open-source models are available day-one.
 
 ```ts
-import { createWllamaProvider } from "wepi/wllama";
+import { createWllamaProvider } from "@wepi/sdk/wllama";
 import wasmUrl from "@wllama/wllama/esm/wasm/wllama.wasm?url"; // vite
 
 const { provider, modelId } = await createWllamaProvider({
@@ -63,13 +63,13 @@ options are ignored and `modelId` is only the reported id.
   `Qwen/Qwen3-*-GGUF` repos ship only `Q8_0`; auto-picking `Q4_K_M` fails with
   "No GGUF file found" — pin a quant/file that the repo actually contains.
 
-## `wepi/webllm` — MLC-precompiled models
+## `@wepi/sdk/webllm` — MLC-precompiled models
 
 A mature engine, but it only runs models MLC has precompiled, so the newest
 releases lag. Choose a function-calling build.
 
 ```ts
-import { createWebLLMProvider } from "wepi/webllm";
+import { createWebLLMProvider } from "@wepi/sdk/webllm";
 
 const { provider, modelId } = await createWebLLMProvider({
   model: "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC",
@@ -89,7 +89,7 @@ five Hermes 7–8B builds (`Hermes-2-Pro-Mistral-7B`,
 for `ChatCompletionRequest.tools`". These are large (multi-GB) downloads and can
 be heavy on the GPU.
 
-## `wepi/litert` — Gemma 4 with native tool calls
+## `@wepi/sdk/litert` — Gemma 4 with native tool calls
 
 llama.cpp and MLC are text-first. LiteRT-LM is Google's on-device runtime (the
 successor to MediaPipe LLM Inference) and the path Google ships Gemma 4 on. Its
@@ -97,7 +97,7 @@ successor to MediaPipe LLM Inference) and the path Google ships Gemma 4 on. Its
 tool calls without a hand-rolled parser.
 
 ```ts
-import { createLiteRTProvider } from "wepi/litert";
+import { createLiteRTProvider } from "@wepi/sdk/litert";
 import { Engine } from "@litert-lm/core"; // build the engine in your app (Vite)
 
 const engine = await Engine.create({
@@ -136,9 +136,9 @@ await createChat({ provider: "openai", model: "qwen3:8b", baseUrl: "http://local
 
 ## Which should I use?
 
-- **Latest open model, minimal fuss:** `wepi/wllama` (any GGUF, day-one).
-- **A blessed, stable Hermes build:** `wepi/webllm`.
-- **Gemma 4 specifically / Google's runtime:** `wepi/litert`.
+- **Latest open model, minimal fuss:** `@wepi/sdk/wllama` (any GGUF, day-one).
+- **A blessed, stable Hermes build:** `@wepi/sdk/webllm`.
+- **Gemma 4 specifically / Google's runtime:** `@wepi/sdk/litert`.
 - **A model server you already run:** `baseUrl` + `provider: "openai"`.
 
 ## See also

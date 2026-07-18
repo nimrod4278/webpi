@@ -22,7 +22,7 @@ Run the same checks CI runs:
 ```bash
 pnpm -r build          # every package builds
 pnpm -r typecheck      # no type errors
-pnpm --filter wepi test
+pnpm --filter @wepi/sdk test
 ```
 
 Please keep pull requests focused — one logical change per PR is much easier to

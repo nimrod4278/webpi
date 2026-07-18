@@ -1,5 +1,5 @@
 /**
- * The wepi/wllama provider, exercised against a FAKE engine (no WASM, no GGUF
+ * The @wepi/sdk/wllama provider, exercised against a FAKE engine (no WASM, no GGUF
  * download). Proves three things offline:
  *   1. Request wiring: OpenAI-shaped params + the abort signal are forwarded to
  *      `createChatCompletion` (wllama takes `abortSignal` in-band).
@@ -28,7 +28,7 @@ function fakeEngine(chunks: unknown[]): { engine: WllamaEngine; requests: any[] 
 const TOOLS = [{ name: "bash", description: "run a shell command", parameters: { type: "object", properties: {} } }] as any;
 const userMessage = { role: "user", content: "run hello world", timestamp: 0 } as any;
 
-describe("wepi/wllama provider", () => {
+describe("@wepi/sdk/wllama provider", () => {
   it("keeps a real system message even when tools are present", async () => {
     const { engine, requests } = fakeEngine([
       { choices: [{ delta: { content: "ok" } }] },

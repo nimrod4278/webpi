@@ -1,9 +1,9 @@
 /**
- * `wepi/wllama` — run ANY GGUF model *locally in the browser* via wllama
+ * `@wepi/sdk/wllama` — run ANY GGUF model *locally in the browser* via wllama
  * (llama.cpp compiled to WebAssembly, WebGPU-accelerated since wllama v3.1),
  * with no API key and no network calls to any provider.
  *
- *   import { createWllamaProvider } from "wepi/wllama";
+ *   import { createWllamaProvider } from "@wepi/sdk/wllama";
  *   import wasmUrl from "@wllama/wllama/esm/wasm/wllama.wasm?url"; // vite
  *   const { provider, modelId } = await createWllamaProvider({
  *     repo: "Qwen/Qwen3-4B-Instruct-2507-GGUF",
@@ -13,7 +13,7 @@
  *   });
  *   const chat = await createChat({ provider, model: modelId }); // keyless
  *
- * Why this exists next to `wepi/webllm`: WebLLM only runs MLC-precompiled
+ * Why this exists next to `@wepi/sdk/webllm`: WebLLM only runs MLC-precompiled
  * models, so the newest open-source releases lag behind. llama.cpp gets new
  * architectures first and every GGUF on Hugging Face works with zero
  * conversion — day-one model availability. Chunk translation is shared with

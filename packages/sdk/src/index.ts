@@ -1,7 +1,7 @@
 /**
  * wepi — run the pi coding agent natively in the browser.
  *
- *   import { createChat } from "wepi";
+ *   import { createChat } from "@wepi/sdk";
  *   const chat = await createChat({ apiKey });           // Claude by default
  *   const reply = await chat.send("Create hello.ts");    // await full reply
  *   for await (const t of chat.send("Add a test")) ...   // or stream it
@@ -22,7 +22,7 @@ export { NullSandbox } from "./sandbox/index.js";
 export type { Sandbox, ExecResult } from "./sandbox/index.js";
 export { buildModel } from "./model.js";
 export type { ModelConfig, BuiltModel } from "./model.js";
-// Re-exported for consumers injecting a custom/local provider (e.g. wepi/webllm).
+// Re-exported for consumers injecting a custom/local provider (e.g. @wepi/sdk/webllm).
 export type { Api, Model, Provider } from "@earendil-works/pi-ai";
 // Re-exported for consumers defining custom agent tools (ChatOptions.tools).
 export { Type } from "@earendil-works/pi-ai";

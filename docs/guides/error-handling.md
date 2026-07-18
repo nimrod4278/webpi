@@ -7,8 +7,8 @@ strings.
 ## `WepiError`
 
 ```ts
-import { WepiError } from "wepi";
-import type { WepiErrorCode } from "wepi";
+import { WepiError } from "@wepi/sdk";
+import type { WepiErrorCode } from "@wepi/sdk";
 
 try {
   await chat.send("do the thing");

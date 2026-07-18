@@ -1,4 +1,4 @@
-# The bash sandbox (`wepi/c2w`)
+# The bash sandbox (`@wepi/sdk/c2w`)
 
 The `bash` tool needs somewhere to run shell commands. In the browser, that is
 `C2wSandbox` — a [container2wasm](https://github.com/container2wasm/container2wasm)
@@ -8,8 +8,8 @@ contains, its runtime semantics, and the hosting requirements.
 ## Attaching it
 
 ```ts
-import { createChat } from "wepi";
-import { C2wSandbox } from "wepi/c2w";
+import { createChat } from "@wepi/sdk";
+import { C2wSandbox } from "@wepi/sdk/c2w";
 
 const sandbox = new C2wSandbox({ onLog: console.debug });
 const chat = await createChat({ apiKey, sandbox });
@@ -82,7 +82,7 @@ they're deployment/CORS concerns that can't live in an npm package:
    Point `assetsBaseUrl` at that URL (default: the page origin).
 
 `apps/client` wires all of this up end to end — copy it as a starting point.
-Importing `wepi/c2w` is side-effect-free (the globals are looked up at boot), so
+Importing `@wepi/sdk/c2w` is side-effect-free (the globals are looked up at boot), so
 it is safe in SSR builds.
 
 ## Rebuilding the image
@@ -103,7 +103,7 @@ few minutes.
 pass into `usePiChat`/`createChat`:
 
 ```tsx
-import { useC2wSandbox, usePiChat } from "wepi/react";
+import { useC2wSandbox, usePiChat } from "@wepi/sdk/react";
 
 const c2w = useC2wSandbox();               // boots + warms the VM
 const pi = usePiChat({
@@ -117,7 +117,7 @@ const pi = usePiChat({
 carries the latest lifecycle line for a status display. See
 [React bindings](react.md).
 
-## Alternative backend: lifo.sh (`wepi/lifo`)
+## Alternative backend: lifo.sh (`@wepi/sdk/lifo`)
 
 `C2wSandbox` runs a **real** Alpine userland, but that realism costs you: a
 cross-origin-isolated page, global `<script>`s, and a ~45 MB image to serve.
@@ -132,8 +132,8 @@ npm i @lifo-sh/core          # optional peer dependency
 ```
 
 ```ts
-import { createChat } from "wepi";
-import { LifoSandbox } from "wepi/lifo";
+import { createChat } from "@wepi/sdk";
+import { LifoSandbox } from "@wepi/sdk/lifo";
 
 const sandbox = new LifoSandbox({ onLog: console.debug });
 const chat = await createChat({ apiKey, sandbox });
@@ -143,7 +143,7 @@ In React it exposes the **identical** shape as `useC2wSandbox`, so switching
 backends is a one-line swap:
 
 ```tsx
-import { useLifoSandbox, usePiChat } from "wepi/react";
+import { useLifoSandbox, usePiChat } from "@wepi/sdk/react";
 
 const lifo = useLifoSandbox();             // boots ~instantly, no image
 const pi = usePiChat({ apiKey, sandbox: lifo.sandbox, enabled: !!lifo.sandbox });

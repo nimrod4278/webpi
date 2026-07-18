@@ -1,6 +1,6 @@
 /**
  * `LocalChatEngine` — the seam for local in-browser engines that speak the
- * OpenAI chat-completions dialect. `wepi/webllm` (MLC WebLLM) and `wepi/wllama`
+ * OpenAI chat-completions dialect. `@wepi/sdk/webllm` (MLC WebLLM) and `@wepi/sdk/wllama`
  * (llama.cpp compiled to WASM) both stream OpenAI-shaped chunks; this module
  * owns the translation between pi-ai's `Context`/`AssistantMessageEvent` world
  * and that dialect, so an engine adapter only implements `createStream` (and
@@ -10,7 +10,7 @@
  * tool calls (no JSON-in-text to parse), so it implements pi-ai's `Provider`
  * directly instead.
  *
- * Reached through the engine entrypoints (`wepi/webllm`, `wepi/wllama`); not a
+ * Reached through the engine entrypoints (`@wepi/sdk/webllm`, `@wepi/sdk/wllama`); not a
  * package export itself.
  */
 
