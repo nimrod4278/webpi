@@ -30,7 +30,7 @@ async function checkSandboxUsage(dir: string): Promise<boolean> {
         const content = await fs.readFile(fullPath, "utf8");
         // Look for imports or references to sandbox tools
         if (
-          content.includes("wepi/c2w") ||
+          content.includes("@wepi/sdk/c2w") ||
           content.includes("useC2wSandbox") ||
           content.includes("C2wSandbox")
         ) {

@@ -1,0 +1,32 @@
+wepi
+Copyright (c) 2026 Nimrod Feldman
+
+This product is licensed under the MIT License (see LICENSE).
+
+--------------------------------------------------------------------------------
+Third-party components
+--------------------------------------------------------------------------------
+
+wepi builds on, bundles, or fetches at runtime software from the following
+upstream projects. Each remains under its own license; consult the linked
+projects for the authoritative license text and copyright notices.
+
+- pi / pi-agent-core (@earendil-works/pi-ai)
+  https://github.com/earendil-works/pi
+  The in-browser coding agent loop.
+
+- container2wasm
+  https://github.com/container2wasm/container2wasm
+  Compiles the Alpine container image to WebAssembly and provides the runtime
+  worker/mounter blobs that C2wSandbox loads. Licensed under Apache-2.0.
+
+- Alpine Linux
+  https://alpinelinux.org/
+  The base image whose userland runs inside the container2wasm VM.
+
+- wllama (@wllama/wllama), WebLLM (@mlc-ai/web-llm), LiteRT-LM (@litert-lm/core)
+  Optional in-browser inference engines, loaded only when selected.
+
+Runtime sandbox assets (out.wasm.gzip, imagemounter.wasm.gzip, worker.js, and
+the Alpine rootfs) are not stored in this repository; they are fetched on demand
+by `wepi-fetch-assets`. Their licenses are those of the upstream projects above.

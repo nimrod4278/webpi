@@ -1,14 +1,14 @@
 /**
  * IndexedDBStore — the default browser-local ChatStore.
  *
- * One database ("wepi"), one object store ("chats"), keyed by chat id. Nothing
+ * One database ("@wepi/sdk"), one object store ("chats"), keyed by chat id. Nothing
  * touches IndexedDB until a method is called, so importing this module is safe
  * anywhere (including SSR).
  */
 
 import type { ChatSnapshot, ChatStore } from "./index.js";
 
-const DB_NAME = "wepi";
+const DB_NAME = "@wepi/sdk";
 const STORE = "chats";
 
 function openDb(): Promise<IDBDatabase> {

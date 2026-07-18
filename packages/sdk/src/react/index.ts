@@ -1,8 +1,8 @@
 /**
- * `wepi/react` — React bindings for the pi agent in the browser.
+ * `@wepi/sdk/react` — React bindings for the pi agent in the browser.
  * Hooks only; bring your own UI.
  *
- *   import { usePiChat, useC2wSandbox, useLifoSandbox } from "wepi/react";
+ *   import { usePiChat, useC2wSandbox, useLifoSandbox } from "@wepi/sdk/react";
  */
 
 export { usePiChat } from "./usePiChat.js";

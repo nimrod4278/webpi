@@ -1,8 +1,8 @@
 /**
- * `wepi/webllm` — run models *locally in the browser* via WebLLM + WebGPU, with
+ * `@wepi/sdk/webllm` — run models *locally in the browser* via WebLLM + WebGPU, with
  * no API key and no network calls to any provider.
  *
- *   import { createWebLLMProvider } from "wepi/webllm";
+ *   import { createWebLLMProvider } from "@wepi/sdk/webllm";
  *   const { provider, modelId } = await createWebLLMProvider({
  *     model: "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC",
  *     onProgress: (p) => console.log(p.text),
@@ -12,7 +12,7 @@
  * This wraps a WebLLM engine as a first-class pi-ai `Provider` (via
  * `createProvider`), translating pi-ai's `Context` into OpenAI chat-completion
  * params and the engine's streamed OpenAI-shaped chunks back into pi-ai's
- * `AssistantMessageEvent` stream (shared with `wepi/wllama` — see
+ * `AssistantMessageEvent` stream (shared with `@wepi/sdk/wllama` — see
  * `./openai.ts`). That's the same `Provider`-object seam
  * `createChat({ provider })` uses for any cloud provider — local is just a
  * keyless provider whose transport is a WebGPU engine instead of HTTP.
@@ -29,7 +29,7 @@
  *
  * NOTE — model availability: WebLLM only runs MLC-precompiled models, so the
  * newest open-source releases lag behind. For day-one GGUF support see
- * `wepi/wllama`.
+ * `@wepi/sdk/wllama`.
  */
 
 import { createProvider } from "@earendil-works/pi-ai";

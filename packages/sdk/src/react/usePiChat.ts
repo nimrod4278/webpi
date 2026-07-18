@@ -79,7 +79,7 @@ export function usePiChat(options: UsePiChatOptions): UsePiChatResult {
 
   const nextId = () => `m${idRef.current++}`;
 
-  // An injected Provider object (e.g. a local wepi/webllm engine) is keyless, so
+  // An injected Provider object (e.g. a local @wepi/sdk/webllm engine) is keyless, so
   // it satisfies the auth gate on its own; cloud (string) providers need a key.
   const hasProviderObject = typeof options.provider === "object" && options.provider !== null;
   const hasAuth = !!(options.apiKey || options.baseUrl || options.getApiKey || hasProviderObject);

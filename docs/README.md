@@ -32,7 +32,7 @@ ask pi to write `a.ts` and then run `tsx a.ts` in the same turn.
 | [Local models in the browser](guides/local-models.md) | `wllama`, `webllm`, and `litert` — keyless inference over WebGPU. |
 | [The bash sandbox](guides/sandbox.md) | `C2wSandbox`, cross-origin isolation, and hosting the runtime assets. |
 | [Persistence](guides/persistence.md) | Resume on reload, the `ChatStore` seam, remote backends. |
-| [React bindings](guides/react.md) | `<PiChat>`, `usePiChat`, and `useC2wSandbox`. |
+| [React bindings](guides/react.md) | `usePiChat`, `useC2wSandbox`, and `useLifoSandbox`. |
 | [Networking & API keys](guides/networking-and-keys.md) | Proxy, short-lived tokens, and browser-direct trade-offs. |
 | [Error handling](guides/error-handling.md) | `WepiError`, error codes, abort semantics. |
 
@@ -48,11 +48,11 @@ ask pi to write `a.ts` and then run `tsx a.ts` in the same turn.
 ## The 60-second version
 
 ```bash
-pnpm add wepi
+pnpm add @wepi/sdk
 ```
 
 ```ts
-import { createChat } from "wepi";
+import { createChat } from "@wepi/sdk";
 
 const chat = await createChat({
   apiKey,                                   // or baseUrl / getApiKey

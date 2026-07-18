@@ -109,7 +109,7 @@ export function Home({ onPick }: { onPick: (d: Dataset) => void }) {
 
       <footer className="home-foot muted small">
         Runs the pi coding agent natively in your browser — real Python analysis in a sandbox, powered by the{" "}
-        <code>wepi</code> SDK. No backend.
+        <code>@wepi/sdk</code> SDK. No backend.
       </footer>
     </div>
   );

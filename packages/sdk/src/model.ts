@@ -6,7 +6,7 @@
  * OpenRouter) — pi-ai lazy-loads each provider's SDK, so registering them is
  * cheap and this stays synchronous. Anything outside the registry — any other
  * pi-ai provider, an OpenAI-compatible endpoint, or a *local* engine (see
- * `wepi/webllm`, which runs models in-browser via WebGPU) — plugs in through the
+ * `@wepi/sdk/webllm`, which runs models in-browser via WebGPU) — plugs in through the
  * same seam: pass a pre-built pi-ai `Provider` object as `provider`.
  *
  * Default cloud backend is Anthropic (Claude) called directly from the browser
@@ -44,7 +44,7 @@ export interface ModelConfig {
   /**
    * Cloud provider id from the curated registry (default: "anthropic"), OR a
    * pre-built pi-ai `Provider` object for anything else — another pi-ai
-   * provider, an OpenAI-compatible endpoint, or a local engine (`wepi/webllm`).
+   * provider, an OpenAI-compatible endpoint, or a local engine (`@wepi/sdk/webllm`).
    */
   provider?: string | Provider;
   /**

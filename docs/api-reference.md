@@ -3,16 +3,16 @@
 Every public export, grouped by entry point. Types are described in prose where a
 full signature would add noise; see the source for exact generics.
 
-- [`wepi` (core)](#wepi-core)
-- [`wepi/react`](#wepireact)
-- [`wepi/c2w`](#wepic2w)
-- [`wepi/wllama`](#wepiwllama)
-- [`wepi/webllm`](#wepiwebllm)
-- [`wepi/litert`](#wepilitert)
+- [`@wepi/sdk` (core)](#wepisdk-core)
+- [`@wepi/sdk/react`](#wepisdkreact)
+- [`@wepi/sdk/c2w`](#wepisdkc2w)
+- [`@wepi/sdk/wllama`](#wepisdkwllama)
+- [`@wepi/sdk/webllm`](#wepisdkwebllm)
+- [`@wepi/sdk/litert`](#wepisdklitert)
 
 ---
 
-## `wepi` (core)
+## `@wepi/sdk` (core)
 
 ### `createChat(options): Promise<Chat>`
 
@@ -136,12 +136,12 @@ See [Persistence](guides/persistence.md).
 
 ---
 
-## `wepi/react`
+## `@wepi/sdk/react`
 
 Requires `react` and `react-dom` (>=18) as peer dependencies.
 
-- **`<PiChat {...PiChatProps} />`** — drop-in component; boots the c2w sandbox.
-  `PiChatProps` extends the `ChatOptions` surface.
+Hooks only — this module exports no components and no stylesheet.
+
 - **`usePiChat(options: UsePiChatOptions): UsePiChatResult`** — headless chat
   hook. Options add `enabled?: boolean`. Result: `{ chat, ready, busy, error,
   transcript, send, abort, files }`.
@@ -150,12 +150,16 @@ Requires `react` and `react-dom` (>=18) as peer dependencies.
 - **`useC2wSandbox(opts?): UseC2wSandboxResult`** — boots + warms the sandbox.
   Result: `{ sandbox, status, ready, log }`.
 - **`type C2wStatus`** — `"idle" | "booting" | "warming" | "ready" | "error"`.
+- **`useLifoSandbox(opts?): UseLifoSandboxResult`** — same lifecycle over the
+  lifo.sh backend. Result: `{ sandbox, status, ready, log }`.
+- **`type SandboxStatus`, `type UseSandboxResult`** — the shared lifecycle types
+  both sandbox hooks are built on.
 
 See [React bindings](guides/react.md).
 
 ---
 
-## `wepi/c2w`
+## `@wepi/sdk/c2w`
 
 - **`class C2wSandbox`** — container2wasm Alpine VM implementing `Sandbox`.
   Constructor takes `C2wSandboxOptions` (`onLog`, `assetsBaseUrl`,
@@ -166,7 +170,7 @@ See [The bash sandbox](guides/sandbox.md).
 
 ---
 
-## `wepi/wllama`
+## `@wepi/sdk/wllama`
 
 Optional peer dependency: `@wllama/wllama` (>=3.1).
 
@@ -177,11 +181,11 @@ Optional peer dependency: `@wllama/wllama` (>=3.1).
 or shard array), `wasmUrl`, `engine` (pre-loaded `Wllama`), `onProgress`,
 `contextWindow`, and output limits.
 
-See [Local models](guides/local-models.md#wepiwllama--any-gguf).
+See [Local models](guides/local-models.md#wepisdkwllama--any-gguf).
 
 ---
 
-## `wepi/webllm`
+## `@wepi/sdk/webllm`
 
 Optional peer dependency: `@mlc-ai/web-llm` (>=0.2.79).
 
@@ -191,11 +195,11 @@ Optional peer dependency: `@mlc-ai/web-llm` (>=0.2.79).
 `CreateWebLLMProviderOptions` (key fields): `model`, `engine` (pre-created MLC
 engine), `onProgress`, `contextWindow` (default 8192), `maxTokens` (default 4096).
 
-See [Local models](guides/local-models.md#wepiwebllm--mlc-precompiled-models).
+See [Local models](guides/local-models.md#wepisdkwebllm--mlc-precompiled-models).
 
 ---
 
-## `wepi/litert`
+## `@wepi/sdk/litert`
 
 Optional peer dependency: `@litert-lm/core` (>=0.12).
 
@@ -205,4 +209,4 @@ Optional peer dependency: `@litert-lm/core` (>=0.12).
 Options (key fields): `engine` (pre-created `Engine` — recommended) **or** `model`
 (a `.litertlm` URL or `ReadableStream`), plus context/output settings.
 
-See [Local models](guides/local-models.md#wepilitert--gemma-4-with-native-tool-calls).
+See [Local models](guides/local-models.md#wepisdklitert--gemma-4-with-native-tool-calls).

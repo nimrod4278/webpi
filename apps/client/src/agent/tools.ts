@@ -14,7 +14,7 @@
  * are mirrored to `dashboard.json` in the workspace for free persistence.
  */
 
-import { Type, type AgentTool, type AgentToolResult, type VirtualFS } from "wepi";
+import { Type, type AgentTool, type AgentToolResult, type VirtualFS } from "@wepi/sdk";
 import type { ParsedCsv } from "../data/profile";
 import { groupAggregate, metricValue, unknownColumns, formatNumber, type Agg, type Filter } from "../data/aggregate";
 import { DashboardStore, nextWidgetId } from "../dashboard/DashboardStore";

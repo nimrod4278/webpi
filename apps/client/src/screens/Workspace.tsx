@@ -12,8 +12,8 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePiChat, useC2wSandbox } from "wepi/react";
-import type { Chat, VirtualFS } from "wepi";
+import { usePiChat, useC2wSandbox } from "@wepi/sdk/react";
+import type { Chat, VirtualFS } from "@wepi/sdk";
 import { ChatPanel } from "../chat/ChatPanel";
 import { Dashboard } from "../dashboard/Dashboard";
 import { DashboardStore } from "../dashboard/DashboardStore";

@@ -15,7 +15,7 @@ The agent's workspace is mirrored into the VM around every shell command, so fil
 This is a pnpm monorepo with two packages:
 
 ```
-packages/sdk    → the `wepi` SDK: headless core + React hooks (`wepi/react`) + c2w sandbox (`wepi/c2w`)
+packages/sdk    → the `wepi` SDK: headless core + React hooks (`@wepi/sdk/react`) + c2w sandbox (`@wepi/sdk/c2w`)
 apps/client     → a React + Vite app; the canonical example of consuming the SDK
 ```
 
@@ -23,27 +23,27 @@ apps/client     → a React + Vite app; the canonical example of consuming the S
 pnpm install
 pnpm -r build          # build every package
 pnpm -r typecheck
-pnpm --filter wepi test
+pnpm --filter @wepi/sdk test
 pnpm --filter wepi-client dev   # run the example app
 ```
 
 ## Install
 
 ```bash
-pnpm add wepi          # + react, react-dom if you use wepi/react
+pnpm add @wepi/sdk          # + react, react-dom if you use @wepi/sdk/react
 ```
 
 ## Use — the core API
 
 ```ts
-import { createChat } from "wepi";
+import { createChat } from "@wepi/sdk";
 
 const chat = await createChat({
   apiKey,                                   // or baseUrl / getApiKey — see Networking & keys
   model: "claude-sonnet-4-5",               // optional
   files: { "a.ts": "export const x = 1;" }, // optional: seed the workspace
   persist: "proj-1",                        // optional: resume on reload (IndexedDB by default)
-  sandbox,                                  // optional: a Sandbox for the bash tool (see wepi/c2w)
+  sandbox,                                  // optional: a Sandbox for the bash tool (see @wepi/sdk/c2w)
 });
 
 // send() streams AND awaits — pick one per call.
@@ -77,7 +77,7 @@ import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 await createChat({ provider: deepseekProvider(), model: "deepseek-v4-pro", apiKey });
 
 // Local, in-browser via wllama (llama.cpp/WASM + WebGPU) — keyless, ANY GGUF on HF:
-import { createWllamaProvider } from "wepi/wllama";
+import { createWllamaProvider } from "@wepi/sdk/wllama";
 import wasmUrl from "@wllama/wllama/esm/wasm/wllama.wasm?url"; // vite
 const { provider, modelId } = await createWllamaProvider({
   repo: "Qwen/Qwen3-1.7B-GGUF", quant: "Q4_K_M",   // day-one GGUF, no precompilation
@@ -87,7 +87,7 @@ const { provider, modelId } = await createWllamaProvider({
 await createChat({ provider, model: modelId });
 
 // Local, in-browser via WebLLM + WebGPU — keyless (MLC precompiled models only):
-import { createWebLLMProvider } from "wepi/webllm";
+import { createWebLLMProvider } from "@wepi/sdk/webllm";
 const { provider, modelId } = await createWebLLMProvider({
   model: "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC",   // pick a function-calling model
   onProgress: (p) => console.log(p.text),          // weight download / compile progress
@@ -99,9 +99,9 @@ await createChat({ provider, model: modelId });
 await createChat({ provider: "openai", model: "qwen3:8b", baseUrl: "http://localhost:11434/v1" });
 ```
 
-**Which local engine?** `wepi/wllama` runs **any GGUF on Hugging Face with zero
+**Which local engine?** `@wepi/sdk/wllama` runs **any GGUF on Hugging Face with zero
 conversion** (llama.cpp gets new architectures first, so the latest open-source
-models work day-one) and is WebGPU-accelerated since wllama v3.1. `wepi/webllm`
+models work day-one) and is WebGPU-accelerated since wllama v3.1. `@wepi/sdk/webllm`
 only runs MLC-precompiled models — a mature engine, but the newest releases lag.
 Both are **optional** peer dependencies (`@wllama/wllama`, `@mlc-ai/web-llm`),
 loaded only by their respective modules, and both accept a pre-created `engine`
@@ -125,7 +125,7 @@ with the partial text and `turn.aborted === true`.
 implement the two-method `ChatStore` interface and pass `{ id, store }`:
 
 ```ts
-import type { ChatStore, ChatSnapshot } from "wepi";
+import type { ChatStore, ChatSnapshot } from "@wepi/sdk";
 
 class ApiStore implements ChatStore {
   async load(id: string) { return (await fetch(`/api/chats/${id}`)).json(); }
@@ -141,12 +141,12 @@ Snapshots (`{ version, messages, files, updatedAt }`) are saved once per
 completed turn — never per token — so a network-backed store is cheap.
 `updatedAt` supports optimistic concurrency on the server side.
 
-## Use — React (`wepi/react`)
+## Use — React (`@wepi/sdk/react`)
 
 Two hooks — the agent and the sandbox as React state, your markup on top:
 
 ```tsx
-import { usePiChat, useC2wSandbox } from "wepi/react";
+import { usePiChat, useC2wSandbox } from "@wepi/sdk/react";
 
 const c2w = useC2wSandbox();               // boots + warms the bash sandbox
 const pi = usePiChat({
@@ -160,10 +160,10 @@ const pi = usePiChat({
 `react` / `react-dom` are peer dependencies. The bash sandbox needs a
 cross-origin-isolated page plus a few app-supplied assets — see below.
 
-## The c2w bash sandbox (`wepi/c2w`)
+## The c2w bash sandbox (`@wepi/sdk/c2w`)
 
 ```ts
-import { C2wSandbox } from "wepi/c2w";
+import { C2wSandbox } from "@wepi/sdk/c2w";
 const sandbox = new C2wSandbox({ onLog: console.debug });
 const chat = await createChat({ apiKey, sandbox });
 ```
@@ -195,14 +195,14 @@ npm tarball):
 - the wasm/image assets (`out.wasm.gzip`, `imagemounter.wasm.gzip`, the
   `alpine/` OCI image, `worker.js`, `dist/`) served under one base URL —
   point `assetsBaseUrl` at it (default: the page origin). 
-  * **If using Vite (recommended)**: Add the `wepiAssetsPlugin` (from `wepi/vite`) to your `vite.config.ts`. It will automatically scan your `src/` directory for sandbox usage (e.g. `C2wSandbox` or `useC2wSandbox`) and download the assets into your `./public` folder at server/build start.
+  * **If using Vite (recommended)**: Add the `wepiAssetsPlugin` (from `@wepi/sdk/vite`) to your `vite.config.ts`. It will automatically scan your `src/` directory for sandbox usage (e.g. `C2wSandbox` or `useC2wSandbox`) and download the assets into your `./public` folder at server/build start.
   * **If using other bundlers**: Run **`wepi-fetch-assets ./public`** once to download a prebuilt bundle into that directory (see [The sandbox image](#the-sandbox-image)).
 - the xterm-pty + `runcontainer.js` global `<script>`s in `index.html`,
 - the cross-origin-isolation headers (see below).
 
-`apps/client` wires all of this up — copy it as a starting point. Importing `wepi/c2w` is side-effect free (the globals are looked up at boot), so it's safe in SSR builds.
+`apps/client` wires all of this up — copy it as a starting point. Importing `@wepi/sdk/c2w` is side-effect free (the globals are looked up at boot), so it's safe in SSR builds.
 
-### Lighter alternative: lifo.sh (`wepi/lifo`)
+### Lighter alternative: lifo.sh (`@wepi/sdk/lifo`)
 
 Don't need a real Alpine VM? [lifo.sh](https://lifo.sh) (`@lifo-sh/core`, MIT) is a
 Linux-*like* OS reimplemented in pure TypeScript — virtual filesystem, bash-like
@@ -211,7 +211,7 @@ shell, and 60+ Unix commands, all client-side. `LifoSandbox` is a drop-in
 `<script>`s, no image download** — just an optional peer dependency.
 
 ```ts
-import { LifoSandbox } from "wepi/lifo";      // npm i @lifo-sh/core
+import { LifoSandbox } from "@wepi/sdk/lifo";      // npm i @lifo-sh/core
 const chat = await createChat({ apiKey, sandbox: new LifoSandbox() });
 ```
 
@@ -302,7 +302,7 @@ and live workspace read-back *during* a running turn.
 ```bash
 pnpm install
 pnpm -r typecheck
-pnpm --filter wepi test   # offline core: Turn semantics, fs sync, busy guard, persistence
+pnpm --filter @wepi/sdk test   # offline core: Turn semantics, fs sync, busy guard, persistence
 ```
 
 ## Contributing

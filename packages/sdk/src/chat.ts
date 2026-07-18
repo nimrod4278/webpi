@@ -49,7 +49,7 @@ export interface ChatOptions {
   /**
    * Cloud provider id (default: "anthropic"; also openai, google, mistral, groq,
    * xai, deepseek, openrouter), or a pi-ai `Provider` object for anything else —
-   * incl. a local engine from `wepi/webllm`.
+   * incl. a local engine from `@wepi/sdk/webllm`.
    */
   provider?: string | Provider;
   /** Override the system prompt. */

@@ -3,9 +3,22 @@
 #
 # The bundle contains everything C2wSandbox expects under assetsBaseUrl:
 #   alpine/  out.wasm.gzip  imagemounter.wasm.gzip  worker.js  dist/*.js
-# Only alpine/ is built here (from packages/sdk/scripts/sandbox.Dockerfile);
-# the rest are vendored container2wasm upstream blobs committed under
-# apps/client/public and copied in as-is.
+#
+# Only alpine/ is built here, from packages/sdk/scripts/sandbox.Dockerfile.
+#
+# The other four are container2wasm build outputs (webpack build of
+# extras/runcontainerjs, a GOOS=js build of extras/imagemounter, and the c2w
+# CLI's out.wasm). Upstream does NOT publish them as release artifacts, and
+# they are too large to keep in git, so they are carried forward from release
+# to release: this job downloads `wepi-sandbox-runtime.tar.gz` from the
+# BLOB_SOURCE_TAG release and repacks it alongside the freshly built alpine/.
+#
+# Bootstrapping a new repo (one time): build the blobs locally, then
+#   tar -czf wepi-sandbox-runtime.tar.gz -C apps/client/public \
+#     out.wasm.gzip imagemounter.wasm.gzip worker.js dist
+#   gh release create v0.1.0-runtime wepi-sandbox-runtime.tar.gz \
+#     --title "sandbox runtime blobs" --notes "container2wasm build outputs"
+# and point BLOB_SOURCE_TAG at it. See CONTRIBUTING.md.
 name: sandbox-assets
 
 on:
@@ -36,14 +49,29 @@ jobs:
       - name: Build the riscv64 eStargz rootfs
         run: node packages/sdk/scripts/build-image.mjs "$RUNNER_TEMP/assets/alpine"
 
+      - name: Fetch the container2wasm runtime blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BLOB_SOURCE_TAG: v0.1.0-runtime
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/assets"
+          gh release download "$BLOB_SOURCE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern wepi-sandbox-runtime.tar.gz \
+            --output "$RUNNER_TEMP/runtime.tar.gz"
+          tar -xzf "$RUNNER_TEMP/runtime.tar.gz" -C "$out"
+          # Fail loudly rather than shipping a bundle C2wSandbox can't boot.
+          for f in out.wasm.gzip imagemounter.wasm.gzip worker.js dist/runcontainer.js \
+                   dist/stack-worker.js dist/worker-util.js; do
+            test -s "$out/$f" || { echo "missing runtime blob: $f" >&2; exit 1; }
+          done
+
       - name: Assemble the asset bundle
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/assets"
-          src=apps/client/public
-          cp "$src/out.wasm.gzip" "$src/imagemounter.wasm.gzip" "$src/worker.js" "$out/"
-          mkdir -p "$out/dist"
-          cp "$src/dist/"*.js "$out/dist/"
+          test -d "$out/alpine" || { echo "alpine/ rootfs was not built" >&2; exit 1; }
           tag="${{ github.event.release.tag_name || github.event.inputs.tag }}"
           version="${tag#v}"
           tar -czf "wepi-sandbox-assets-${version}.tar.gz" -C "$out" .

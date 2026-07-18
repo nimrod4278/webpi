@@ -36,7 +36,7 @@ To persist anywhere else — your API, Postgres, Supabase — implement the
 two-method `ChatStore` interface and pass `{ id, store }`:
 
 ```ts
-import type { ChatStore, ChatSnapshot } from "wepi";
+import type { ChatStore, ChatSnapshot } from "@wepi/sdk";
 
 class ApiStore implements ChatStore {
   async load(id: string): Promise<ChatSnapshot | null> {

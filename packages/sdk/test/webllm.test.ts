@@ -1,5 +1,5 @@
 /**
- * The wepi/webllm provider, exercised against a FAKE engine (no WebGPU, no
+ * The @wepi/sdk/webllm provider, exercised against a FAKE engine (no WebGPU, no
  * weight download). Proves two things offline:
  *   1. The system-prompt/tools workaround: WebLLM function-calling models reject
  *      a custom `system` message when `tools` are set, so when tools are present
@@ -30,7 +30,7 @@ function fakeEngine(chunks: unknown[]): { engine: WebLLMEngine; requests: any[] 
 const TOOLS = [{ name: "bash", description: "run a shell command", parameters: { type: "object", properties: {} } }] as any;
 const userMessage = { role: "user", content: "run hello world", timestamp: 0 } as any;
 
-describe("wepi/webllm provider", () => {
+describe("@wepi/sdk/webllm provider", () => {
   it("folds the system prompt into the first user turn when tools are present", async () => {
     const { engine, requests } = fakeEngine([
       { choices: [{ delta: { content: "ok" } }] },
